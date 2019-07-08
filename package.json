@@ -7,8 +7,7 @@
   "types": "lib/RtmEngine.d.ts",
   "scripts": {
     "build": "tsc",
-    "doc": "typedoc --options typedoc.js && npm run relink",
-    "relink": "node -e \"fs.existsSync('latest') && fs.unlinkSync('latest'), fs.symlinkSync('0.9.3-beta.1', 'latest')\""
+    "doc": "typedoc --options typedoc.js"
   },
   "repository": {
     "type": "git",

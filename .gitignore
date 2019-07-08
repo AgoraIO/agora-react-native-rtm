@@ -70,3 +70,4 @@ android/.gradle
 android/proguard-rules.pro
 docs
 lib
+latest
