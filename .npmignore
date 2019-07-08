@@ -81,3 +81,8 @@ typedoc.*
 android/.gradle
 *.*~
 src/
+typedoc.json
+typedoc.js
+latest
+*-beta*
+docs
