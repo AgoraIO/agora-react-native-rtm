@@ -24,6 +24,9 @@ const { AgoraRTM } = NativeModules;
  */
 export default class RtmEngine {
 
+  // sdk version
+  private static readonly version: string = '0.9.3-beta.1';
+
   // internal event identifiy for RtmEngine
   private static readonly AG_RTMCHANNEL = "ag_rtm_";
 
