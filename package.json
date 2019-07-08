@@ -1,0 +1,70 @@
+{
+  "name": "agora-react-native-rtm",
+  "version": "0.9.3",
+  "description": "React Native around the Agora RTM SDKs for Android and iOS agora",
+  "summary": "agora native rtm sdk for react-native",
+  "main": "lib/RtmEngine.js",
+  "types": "lib/RtmEngine.d.ts",
+  "scripts": {
+    "build": "tsc",
+    "doc": "typedoc --out docs/api ./src"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/AgoraIO/RN-SDK-RTM.git"
+  },
+  "keywords": [
+    "agora",
+    "react-native",
+    "rtm",
+    "realtime",
+    "agora-react-native-rtm"
+  ],
+  "author": "agoraio",
+  "authors": [
+    "https://github.com/agoraio/RN-SDK-RTM/graphs/contributors"
+  ],
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/AgoraIO/RN-SDK-RTM/issues"
+  },
+  "homepage": "https://github.com/AgoraIO/RN-SDK-RTM#README",
+  "peerDependencies": {
+    "react": ">= 16.3.1",
+    "react-native": ">=0.55.0"
+  },
+  "devDependencies": {
+    "@types/jest": "^23.3.13",
+    "@types/react": "^16.3.0",
+    "@types/react-native": "^0.55.0",
+    "@types/react-test-renderer": "^16.0.3",
+    "react": "16.3.1",
+    "react-native": "^0.59.9",
+    "react-native-typescript-transformer": "^1.2.11",
+    "ts-jest": "^23.10.5",
+    "tslint": "^5.12.1",
+    "typedoc": "^0.14.2",
+    "typescript": "^3.2.4"
+  },
+  "jest": {
+    "preset": "react-native",
+    "moduleFileExtensions": [
+      "ts",
+      "tsx",
+      "js"
+    ],
+    "transform": {
+      "^.+\\.(js)$": "<rootDir>/node_modules/babel-jest",
+      "\\.(ts|tsx)$": "<rootDir>/node_modules/ts-jest/preprocessor.js"
+    },
+    "testRegex": "(/__tests__/.*|\\.(test|spec))\\.(ts|tsx|js)$",
+    "testPathIgnorePatterns": [
+      "\\.snap$",
+      "<rootDir>/node_modules/"
+    ],
+    "cacheDirectory": ".jest/cache"
+  },
+  "dependencies": {
+    "tslib": "^1.9.3"
+  }
+}
