@@ -70,7 +70,6 @@ android/gradle*
 android/*.pro
 android/*.iml
 ios/.DS_Store
-ios/AgoraRTM.xcodeproj
 package-lock.json
 tsconfig.*
 typedoc.*
