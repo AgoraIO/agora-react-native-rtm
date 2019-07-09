@@ -201,7 +201,6 @@ public class AgoraRTMModule extends ReactContextBaseJavaModule
                     promise.reject(Integer.toString(errorInfo.getErrorCode()), errorInfo.getErrorDescription());
                 }
             });
-            channels.put("channelId", rtmChannel);
         }
     }
 
