@@ -87,3 +87,7 @@ latest
 docs
 latest/
 typedoc.js
+examples
+android/.settings/org.eclipse.buildship.core.prefs
+lib/**.js.map
+lib/**/*.js.map

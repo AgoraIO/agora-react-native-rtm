@@ -71,3 +71,7 @@ android/proguard-rules.pro
 docs
 lib
 latest
+examples/chatapp/ios/Pods
+**/*.*~
+**/*~
+examples/chatapp/ios/Podfile.lock
