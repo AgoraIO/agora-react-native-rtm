@@ -31,7 +31,7 @@ To build and run the sample application, get an App ID:
 3. Save the **App ID** from the Dashboard for later use.
 
 ### Update and Run the Sample Application
-Open the project folder and edit the [`src/utils.ts`](https://github.com/AgoraIO/RN-SDK-RTM/tree/master/examples/chatapp/src/utils.ts) file. Update `Your Agora APPID` with your app ID.
+Open the project folder and edit the [`src/utils.ts`](https://github.com/AgoraIO/RN-SDK-RTM/tree/master/examples/chatsapp/src/utils.ts) file. Update `Your Agora APPID` with your app ID.
 
     ```javascript
     export const APP_ID = 'Your Agora APPID'

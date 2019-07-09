@@ -30,7 +30,7 @@
 
 ### 更新并运行示例应用程序
 
-打开[`src/utils.ts`](https://github.com/AgoraIO/RN-SDK-RTM/tree/master/examples/chatapp/src/utils.ts)文件并添加App ID。
+打开[`src/utils.ts`](https://github.com/AgoraIO/RN-SDK-RTM/tree/master/examples/chatsapp/src/utils.ts)文件并添加App ID。
 
 ```javascript
     export const APP_ID = 'Your Agora APPID'
