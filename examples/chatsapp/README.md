@@ -33,9 +33,10 @@ To build and run the sample application, get an App ID:
 ### Update and Run the Sample Application
 Open the project folder and edit the [`src/utils.ts`](https://github.com/AgoraIO/RN-SDK-RTM/tree/master/examples/chatsapp/src/utils.ts) file. Update `Your Agora APPID` with your app ID.
 
-    ```javascript
-    export const APP_ID = 'Your Agora APPID'
-    ```
+```javascript
+export const APP_ID = 'Your Agora APPID'
+```
+
 ### Setup
 #### Step 1. install node dependencies & link react native modules
 Run the below commands in this project folder:
@@ -61,10 +62,10 @@ Once the build is complete, run the `npm run start` comamnd to start the package
   react-native run-android
 ```
 
-##### iOS Platfomr
+##### iOS Platform
   1. `cd ios; pod install`
   2. `open ios/chatsapp.xcworkspace`
-  3. `fill identity & signing'
+  3. `fill with valid developer account identity & signing`
   4. `xcode build`
 
 
