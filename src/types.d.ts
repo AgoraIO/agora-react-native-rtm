@@ -33,8 +33,8 @@ export interface UserAttribute {
 
 export interface LocalInvitationProps {
   uid: string
-  content?: string
-  channelId: string
+  content?: string // recommnd used with rtm communication
+  channelId?: string // recommnd used with signal service communication
 }
 
 export interface RemoteInvitationProps {

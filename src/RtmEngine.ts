@@ -25,7 +25,7 @@ const { AgoraRTM } = NativeModules;
 export default class RtmEngine {
 
   // sdk version
-  private static readonly version: string = '0.9.3-beta.1';
+  private static readonly version: string = '1.0.0-alpha.1';
 
   // internal event identifiy for RtmEngine
   private static readonly AG_RTMCHANNEL = "ag_rtm_";
@@ -36,6 +36,26 @@ export default class RtmEngine {
   // create RtmEngine instance
   constructor () {
     this.events = new NativeEventEmitter(AgoraRTM);
+  }
+
+  /**
+   * get the version of rtm sdk
+   * @param callback (version) => {} required
+   */
+  getSdkVersion (callback: void): void {
+    AgoraRTM.getSdkVersion(callback);
+  }
+
+  /**
+   * set sdk log file
+   * @param path string: specified the generated log path
+   * @param level number: sdk log level (0: "OFF", 0x0f: "INFO", 0x0e: "WARN", 0x0c: "ERROR", 0x08: "CRITICAL")
+   * @param size number: file size in kbytes
+   * Note File size settings of less than 512 KB or greater than 10 MB will not take effect.
+   * @return Promise<any> This method will return {path: boolean, level: boolean, size: boolean}
+   */
+  setSdkLog (path: string, level: number, size: number): Promise<any> {
+    return AgoraRTM.setSdkLog(path, level, size)
   }
 
   /**
