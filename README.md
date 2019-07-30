@@ -24,13 +24,13 @@ Either way, then link with:
  `react-native link agora-react-native-rtm`
 
 ## Documentation
-  * [examples](https://github.com/AgoraIO/RN-SDK-RTM/tree/master/examples)
-  * [api docs](https://agoraio.github.io/RN-SDK-RTM/latest/)
+  * [examples](https://github.com/AgoraIO/agora-react-native-rtm/tree/master/examples)
+  * [api docs](https://agoraio.github.io/agora-react-native-rtm/latest/)
   * [Agora RTM 中文文档](https://docs-preview.agoralab.co/cn/Real-time-Messaging/RTM_product?platform=All%20Platforms)
   * [Agora RTM English](https://docs-preview.agoralab.co/en/Real-time-Messaging/RTM_product?platform=All%20Platforms)
 
 
 ## Resources
 * Complete [API documentation](https://docs.agora.io/en/) at the Developer Center
-* [File bugs about this sample](https://github.com/AgoraIO/RN-SDK-RTM/issues)
+* [File bugs about this sample](https://github.com/AgoraIO/agora-react-native-rtm/issues)
 * [React Native Getting Started](https://facebook.github.io/react-native/docs/getting-started.html)
