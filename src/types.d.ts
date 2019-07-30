@@ -15,6 +15,8 @@ export interface AgoraMessage {
 
 export type RTMEventCallback = () => {}
 
+export type Callback = () => {}
+
 export interface UserInfo {
   token?: string
   uid: String

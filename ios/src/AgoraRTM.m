@@ -132,9 +132,9 @@ RCT_EXPORT_METHOD(setSdkLog:(NSString *)path
                   resolve:(RCTPromiseResolveBlock)resolve
                   reject:(RCTPromiseRejectBlock)reject) {
   int fileSize = (int) size;
-  int setpath = [[AgoraRtmKit new] setLogFile:path];
-  int setsize = [[AgoraRtmKit new] setLogFileSize:fileSize];
-  int setlevel = [[AgoraRtmKit new] setLogFilters:level];
+  int setpath = [_rtmEngine setLogFile:path];
+  int setsize = [_rtmEngine setLogFileSize:fileSize];
+  int setlevel = [_rtmEngine setLogFilters:level];
 
   resolve(@{
             @"path": @(setpath == 0),
