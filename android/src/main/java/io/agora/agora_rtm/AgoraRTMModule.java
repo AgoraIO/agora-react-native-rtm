@@ -3,6 +3,7 @@ package io.agora.agora_rtm;
 import android.support.annotation.Nullable;
 
 import com.facebook.react.bridge.Arguments;
+import com.facebook.react.bridge.Callback;
 import com.facebook.react.bridge.Promise;
 import com.facebook.react.bridge.ReactApplicationContext;
 import com.facebook.react.bridge.ReactContextBaseJavaModule;
@@ -34,6 +35,7 @@ import io.agora.rtm.RtmClient;
 import io.agora.rtm.RtmClientListener;
 import io.agora.rtm.RtmMessage;
 import io.agora.rtm.SendMessageOptions;
+import io.agora.rtm.internal.RtmSdkContext;
 
 public class AgoraRTMModule extends ReactContextBaseJavaModule
         implements RtmClientListener, RtmCallEventListener, RtmChannelListener {
@@ -106,6 +108,27 @@ public class AgoraRTMModule extends ReactContextBaseJavaModule
         rtmClient.release();
         rtmClient = null;
     }
+
+    // get sdk version
+    @ReactMethod
+    public void getSdkVersion(Callback callback) {
+        callback.invoke(RtmClient.getSdkVersion());
+    }
+
+    // set sdk log
+    @ReactMethod
+    public void setSdkLog(final String path, final Integer level, final Integer size,
+                          final Promise promise) {
+        Integer setpath = rtmClient.setLogFile(path);
+        Integer setlevel = rtmClient.setLogFilter(level);
+        Integer setsize = rtmClient.setLogFileSize(size);
+        WritableMap data = Arguments.createMap();
+        data.putBoolean("path", setpath == 0);
+        data.putBoolean("size", setsize == 0);
+        data.putBoolean("level", setlevel == 0);
+        promise.resolve(data);
+    }
+
 
     // login
     @ReactMethod
@@ -433,13 +456,14 @@ public class AgoraRTMModule extends ReactContextBaseJavaModule
     public void sendLocalInvitation (ReadableMap params, final Promise promise) {
         final String calleeId = params.getString("uid");
         final LocalInvitation localInvitation = rtmCallManager.createLocalInvitation(calleeId);
-        final String channelId = params.getString("channelId");
-        String content = null;
         if(params.hasKey("content")) {
-            content = params.getString("content");
+            String content = params.getString("content");
             localInvitation.setContent(content);
         }
-        localInvitation.setChannelId(channelId);
+        if(params.hasKey("channelId")) {
+            String channelId = params.getString("channelId");
+            localInvitation.setChannelId(channelId);
+        }
         rtmCallManager.sendLocalInvitation(localInvitation, new ResultCallback<Void> () {
             @Override
             public void onSuccess(Void aVoid) {
@@ -460,12 +484,15 @@ public class AgoraRTMModule extends ReactContextBaseJavaModule
         final String calleeId = params.getString("uid");
         if (null != localInvitations.get(calleeId)) {
             final LocalInvitation localInvitation = localInvitations.get(calleeId);
-            String channelId = params.getString("channelId");
             if (params.hasKey("content")) {
                 String content = params.getString("content");
                 localInvitation.setContent(content);
             }
-            localInvitation.setChannelId(channelId);
+            if (params.hasKey("channelId")) {
+                String channelId = params.getString("channelId");
+                localInvitation.setChannelId(channelId);
+            }
+
             rtmCallManager.cancelLocalInvitation(localInvitation, new ResultCallback<Void> () {
                 @Override
                 public void onSuccess(Void aVoid) {

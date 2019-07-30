@@ -14,7 +14,7 @@ Pod::Spec.new do |s|
   s.source        = { :git => package["repository"]["url"], :tag => "#{s.version}" }
   s.source_files = 'ios/src/**/*.{h,m}'
 
-  s.dependency 'AgoraRtm_iOS', '0.9.3'
+  s.dependency 'AgoraRtm_iOS', '1.0.0'
   s.dependency 'React'
   s.ios.deployment_target = '8.0'
 end

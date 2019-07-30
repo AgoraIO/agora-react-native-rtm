@@ -120,6 +120,30 @@ RCT_EXPORT_METHOD(logout:(RCTPromiseResolveBlock)resolve
   }];
 }
 
+// get sdk version
+RCT_EXPORT_METHOD(getSdkVersion:(RCTResponseSenderBlock)callback) {
+  callback(@[[AgoraRtmKit getSDKVersion]]);
+}
+
+// set sdk log
+RCT_EXPORT_METHOD(setSdkLog:(NSString *)path
+                  level:(NSInteger)level
+                  size:(NSInteger)size
+                  resolve:(RCTPromiseResolveBlock)resolve
+                  reject:(RCTPromiseRejectBlock)reject) {
+  int fileSize = (int) size;
+  int setpath = [_rtmEngine setLogFile:path];
+  int setsize = [_rtmEngine setLogFileSize:fileSize];
+  int setlevel = [_rtmEngine setLogFilters:level];
+
+  resolve(@{
+            @"path": @(setpath == 0),
+            @"size": @(setsize == 0),
+            @"level": @(setlevel == 0)
+  });
+}
+
+
 // renewToken
 RCT_EXPORT_METHOD(renewToken:(NSString*)token
                   resolve:(RCTPromiseResolveBlock)resolve
@@ -352,7 +376,9 @@ RCT_EXPORT_METHOD(sendLocalInvitation:(NSDictionary *)params
   if ([params objectForKey:@"content"]) {
     localInvitation.content = params[@"content"];
   }
-  localInvitation.channelId = params[@"channelId"];
+  if ([params objectForKey:@"channelId"]) {
+    localInvitation.channelId = params[@"channelId"];
+  }
   [_rtmCallManager sendLocalInvitation:localInvitation completion:^(AgoraRtmInvitationApiCallErrorCode errorCode) {
     if (0 != (int)errorCode) {
       reject(@(-1).stringValue, @(errorCode).stringValue, nil);
@@ -373,7 +399,9 @@ RCT_EXPORT_METHOD(cancelLocalInvitation:(NSDictionary *)params
     if ([params objectForKey:@"content"]) {
       localInvitation.content = params[@"content"];
     }
-    localInvitation.channelId = params[@"channelId"];
+    if ([params objectForKey:@"channelId"]) {
+      localInvitation.channelId = params[@"channelId"];
+    }
     [_rtmCallManager cancelLocalInvitation:localInvitation completion:^(AgoraRtmInvitationApiCallErrorCode errorCode) {
       if (0 != (int)errorCode) {
         reject(@(-1).stringValue, @(errorCode).stringValue, nil);
