@@ -26,8 +26,8 @@ Either way, then link with:
 ## Documentation
   * [examples](https://github.com/AgoraIO/agora-react-native-rtm/tree/master/examples)
   * [api docs](https://agoraio.github.io/agora-react-native-rtm/latest/)
-  * [Agora RTM 中文文档](https://docs-preview.agoralab.co/cn/Real-time-Messaging/RTM_product?platform=All%20Platforms)
-  * [Agora RTM English](https://docs-preview.agoralab.co/en/Real-time-Messaging/RTM_product?platform=All%20Platforms)
+  * [Agora RTM 中文文档](https://docs.agora.io/cn/Real-time-Messaging/RTM_product?platform=All%20Platforms)
+  * [Agora RTM English](https://docs.agora.io/en/Real-time-Messaging/RTM_product?platform=All%20Platforms)
 
 
 ## Resources
