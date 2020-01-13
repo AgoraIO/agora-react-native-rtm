@@ -265,7 +265,7 @@ export default class RtmEngine {
    * @param params AgoraPeerMessage
    * ---
    * peerId | string | required |
-   * offline | string | requried |
+   * offline | boolean | requried |
    * text | string | required |
    * ---
    * @return Promise<any>
