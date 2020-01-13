@@ -161,6 +161,8 @@ const { AgoraRTM } = NativeModules;
  */
 export default class RtmEngine {
 
+  static init: boolean = false;
+
   // sdk version
   private static readonly version: string = '1.0.0-alpha.1';
 
@@ -213,7 +215,11 @@ export default class RtmEngine {
    * @return void
    */
   createClient(appId: string): void {
-    return AgoraRTM.init(appId);
+    if (RtmEngine.init === true) return;
+
+    AgoraRTM.init(appId);
+    RtmEngine.init = true;
+    return;
   }
 
   /**
@@ -223,7 +229,11 @@ export default class RtmEngine {
    * @return void
    */
   destroyClient(): void {
-    return AgoraRTM.destroy();
+    if (RtmEngine.init === false) return;
+    
+    AgoraRTM.destroy();
+    RtmEngine.init = false;
+    return;
   }
 
   /**
