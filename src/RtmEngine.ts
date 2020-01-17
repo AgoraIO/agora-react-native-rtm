@@ -151,6 +151,7 @@ export enum LogLevel {
 import {
   NativeModules,
   NativeEventEmitter,
+  EmitterSubscription,
 } from 'react-native';
 
 const { AgoraRTM } = NativeModules;
@@ -170,11 +171,15 @@ export default class RtmEngine {
   private static readonly AG_RTMCHANNEL = "ag_rtm_";
 
   // this property is only for dispatch event in RtmEngine instance.
-  private readonly events: NativeEventEmitter
+  private readonly events: NativeEventEmitter;
+
+  // this property is only monitor NativeEventEmitter Subscription.
+  private readonly internalEventSubscriptions: EmitterSubscription[];
 
   // create RtmEngine instance
   constructor () {
     this.events = new NativeEventEmitter(AgoraRTM);
+    this.internalEventSubscriptions = [];
   }
 
   /**
@@ -204,22 +209,31 @@ export default class RtmEngine {
    * @param callback (evt) => {} required
    */
   on<EventName extends keyof RtmEngineEvents>(eventName: EventName, callback: RTMEventCallback) {
-    this.events.addListener(`${RtmEngine.AG_RTMCHANNEL}${eventName}`, callback);
+    this.internalEventSubscriptions.push(this.events.addListener(`${RtmEngine.AG_RTMCHANNEL}${eventName}`, callback));
   }
 
   /**
    * supports platform: ios, android
-   * This method creates AgoraRTM instance and begin event observing, collect all both remote and local invitaitons and channels resources.
+   * This method creates AgoraRTM instance and begin event observing, collect all both remote and local invitations and channels resources.
    * method: createClient
    * @param appId String
    * @return void
    */
   createClient(appId: string): void {
     if (RtmEngine.init === true) return;
-
     AgoraRTM.init(appId);
     RtmEngine.init = true;
     return;
+  }
+
+  // removeEvents
+  removeEvents () {
+    for (let i = this.internalEventSubscriptions.length; i >= 0; i--) {
+      if (this.internalEventSubscriptions[i]) {
+        this.internalEventSubscriptions[i].remove();
+      }
+      this.internalEventSubscriptions.splice(i, 1);
+    }
   }
 
   /**
@@ -230,7 +244,7 @@ export default class RtmEngine {
    */
   destroyClient(): void {
     if (RtmEngine.init === false) return;
-    
+    this.removeEvents();
     AgoraRTM.destroy();
     RtmEngine.init = false;
     return;

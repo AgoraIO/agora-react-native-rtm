@@ -82,6 +82,9 @@ public class AgoraRTMModule extends ReactContextBaseJavaModule
             rtmClient = RtmClient.createInstance(getReactApplicationContext(), appID, this);
             rtmCallManager = rtmClient.getRtmCallManager();
             rtmCallManager.setEventListener(this);
+            localInvitations = new HashMap<>();
+            remoteInvitations = new HashMap<>();
+            channels = new HashMap<>();
             startObserving();
         } catch (Exception exception) {
             WritableMap params = Arguments.createMap();
@@ -215,7 +218,6 @@ public class AgoraRTMModule extends ReactContextBaseJavaModule
             rtmChannel.join(new ResultCallback<Void>() {
                 @Override
                 public void onSuccess(Void aVoid) {
-                    channels.put(channelId, rtmChannel);
                     promise.resolve(null);
                 }
 
@@ -224,6 +226,17 @@ public class AgoraRTMModule extends ReactContextBaseJavaModule
                     promise.reject(Integer.toString(errorInfo.getErrorCode()), errorInfo.getErrorDescription());
                 }
             });
+            channels.put(channelId, rtmChannel);
+        }
+    }
+
+    // releaseChannel
+    @ReactMethod
+    public void releaseChannel(final String channelId) {
+        final RtmChannel rtmChannel = channels.get(channelId);
+        if (null != rtmChannel) {
+            rtmChannel.release();
+            channels.remove(channelId);
         }
     }
 
@@ -237,8 +250,6 @@ public class AgoraRTMModule extends ReactContextBaseJavaModule
             rtmChannel.leave(new ResultCallback<Void>() {
                 @Override
                 public void onSuccess(Void aVoid) {
-                    rtmChannel.release();
-                    channels.remove(channelId);
                     promise.resolve(null);
                 }
 

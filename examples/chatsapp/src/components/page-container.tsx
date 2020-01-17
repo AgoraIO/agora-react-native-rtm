@@ -8,7 +8,7 @@ const title = "Agora RTM QuickStart"
 
 const Toolbar = (props: any) => (
   <Appbar.Header>
-    <Appbar.Action icon="menu" onPress={() => props.navigation.openDrawer()} />
+    <Appbar.Action icon="menu" />
     <Appbar.Content title={title} />
   </Appbar.Header>
 )
