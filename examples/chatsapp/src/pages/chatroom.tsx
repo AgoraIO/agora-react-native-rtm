@@ -1,9 +1,9 @@
 import React from 'react'
 import PageContainer from '../components/page-container'
-import { withNavigation } from 'react-navigation'
-import {AppContextType, AppContext} from '../components/context'
-import { GiftedChat } from 'react-native-gifted-chat'
-import { Logger } from '../utils'
+import {withNavigation} from 'react-navigation'
+import {AppContext, AppContextType} from '../components/context'
+import {GiftedChat} from 'react-native-gifted-chat'
+import {Logger} from '../utils'
 
 type ChatRoomState = {
   messages: any[],
@@ -28,7 +28,7 @@ class ChatRoom extends React.Component<any, ChatRoomState, AppContextType> {
     this.context.client.on("error", (evt: any) => {
       Logger.log(evt)
     })
-    
+
     this.context.client.on("channelMessageReceived", (evt: any) => {
       const {uid, channelId, text} = evt
       console.log('evt', evt)
@@ -82,7 +82,11 @@ class ChatRoom extends React.Component<any, ChatRoomState, AppContextType> {
     })
   }
 
-  render () {
+  componentWillUnmount() {
+    this.context.client.destroy()
+  }
+
+  render() {
     let uid = this.props.navigation.getParam('uid', "0")
     return (
       <GiftedChat

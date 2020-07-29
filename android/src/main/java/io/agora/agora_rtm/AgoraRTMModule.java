@@ -21,6 +21,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import javax.annotation.Nonnull;
+
 import io.agora.rtm.ErrorInfo;
 import io.agora.rtm.LocalInvitation;
 import io.agora.rtm.RemoteInvitation;
@@ -29,36 +31,46 @@ import io.agora.rtm.RtmAttribute;
 import io.agora.rtm.RtmCallEventListener;
 import io.agora.rtm.RtmCallManager;
 import io.agora.rtm.RtmChannel;
+import io.agora.rtm.RtmChannelAttribute;
 import io.agora.rtm.RtmChannelListener;
 import io.agora.rtm.RtmChannelMember;
 import io.agora.rtm.RtmClient;
 import io.agora.rtm.RtmClientListener;
 import io.agora.rtm.RtmMessage;
 import io.agora.rtm.SendMessageOptions;
-import io.agora.rtm.internal.RtmSdkContext;
 
 public class AgoraRTMModule extends ReactContextBaseJavaModule
         implements RtmClientListener, RtmCallEventListener, RtmChannelListener {
-
-    private Map<String, LocalInvitation> localInvitations = new HashMap<>();
-    private Map<String, RemoteInvitation> remoteInvitations = new HashMap<>();
-    private Map<String, RtmChannel> channels = new HashMap<>();
-
     private RtmClient rtmClient;
     private RtmCallManager rtmCallManager;
+    private Map<String, RtmChannel> channels;
+    private Map<String, LocalInvitation> localInvitations;
+    private Map<String, RemoteInvitation> remoteInvitations;
 
     private boolean hasListeners = false;
 
-    private void startObserving () {
+    public AgoraRTMModule(ReactApplicationContext ctx) {
+        super(ctx);
+        channels = new HashMap<>();
+        localInvitations = new HashMap<>();
+        remoteInvitations = new HashMap<>();
+    }
+
+    @Nonnull
+    @Override
+    public String getName() {
+        return "AgoraRTM";
+    }
+
+    private void startObserving() {
         hasListeners = true;
     }
 
-    private void stopObserving () {
+    private void stopObserving() {
         hasListeners = false;
     }
 
-    private void sendEvent(String eventName,
-                           @Nullable WritableMap params) {
+    private void sendEvent(String eventName, @Nullable WritableMap params) {
         if (hasListeners) {
             getReactApplicationContext()
                     .getJSModule(DeviceEventManagerModule.RCTDeviceEventEmitter.class)
@@ -66,50 +78,34 @@ public class AgoraRTMModule extends ReactContextBaseJavaModule
         }
     }
 
-    public AgoraRTMModule(ReactApplicationContext ctx) {
-        super(ctx);
-    }
-
-    @Override
-    public String getName() {
-        return "AgoraRTM";
-    }
-
     // init AgoraRTM instance, set event observing and init it's internal resources
     @ReactMethod
-    public void init(String appID) {
+    public void init(String appId, Promise promise) {
         try {
-            rtmClient = RtmClient.createInstance(getReactApplicationContext(), appID, this);
+            rtmClient = RtmClient.createInstance(getReactApplicationContext(), appId, this);
             rtmCallManager = rtmClient.getRtmCallManager();
             rtmCallManager.setEventListener(this);
-            localInvitations = new HashMap<>();
-            remoteInvitations = new HashMap<>();
-            channels = new HashMap<>();
             startObserving();
+            promise.resolve(null);
         } catch (Exception exception) {
-            WritableMap params = Arguments.createMap();
-            params.putString("api", "init");
-            params.putString("message", exception.getMessage());
-            sendEvent(AgoraRTMConstants.AG_ERROR, params);
+            promise.reject(exception);
         }
     }
 
     // destroy AgoraRTM instance, remove event observing and it's internal resources
     @ReactMethod
-    public void destroy() {
+    public void destroy(Promise promise) {
         stopObserving();
         localInvitations.clear();
-        localInvitations = null;
         remoteInvitations.clear();
-        remoteInvitations = null;
-        for (Map.Entry<String, RtmChannel> ite: channels.entrySet()) {
-            ite.getValue().release();
+        for (Map.Entry<String, RtmChannel> entry : channels.entrySet()) {
+            entry.getValue().release();
         }
         channels.clear();
-        channels = null;
         rtmCallManager = null;
         rtmClient.release();
         rtmClient = null;
+        promise.resolve(null);
     }
 
     // get sdk version
@@ -120,11 +116,11 @@ public class AgoraRTMModule extends ReactContextBaseJavaModule
 
     // set sdk log
     @ReactMethod
-    public void setSdkLog(final String path, final Integer level, final Integer size,
-                          final Promise promise) {
-        Integer setpath = rtmClient.setLogFile(path);
-        Integer setlevel = rtmClient.setLogFilter(level);
-        Integer setsize = rtmClient.setLogFileSize(size);
+    public void setSdkLog(String path, Integer level, Integer size, Promise promise) {
+        int setpath = rtmClient.setLogFile(path);
+        int setlevel = rtmClient.setLogFilter(level);
+        int setsize = rtmClient.setLogFileSize(size);
+
         WritableMap data = Arguments.createMap();
         data.putBoolean("path", setpath == 0);
         data.putBoolean("size", setsize == 0);
@@ -132,30 +128,31 @@ public class AgoraRTMModule extends ReactContextBaseJavaModule
         promise.resolve(data);
     }
 
-
     // login
     @ReactMethod
-    public void login(final ReadableMap params, final Promise promise) {
-        String token = null;
-        if (params.hasKey("token")) {
+    public void login(ReadableMap params, Promise promise) {
+        String token = null, uid = null;
+        if (params.hasKey("token"))
             token = params.getString("token");
-        }
-        final String userId = params.getString("uid");
-        rtmClient.login(token != null ? token : null, userId, new ResultCallback<Void>() {
+        if (params.hasKey("uid"))
+            uid = params.getString("uid");
+
+        rtmClient.login(token, uid, new ResultCallback<Void>() {
             @Override
             public void onSuccess(Void args) {
                 promise.resolve(null);
             }
+
             @Override
             public void onFailure(ErrorInfo errorInfo) {
-                promise.reject(Integer.toString(errorInfo.getErrorCode()), errorInfo.getErrorDescription());
+                promise.reject(String.valueOf(errorInfo.getErrorCode()), errorInfo.getErrorDescription());
             }
         });
     }
 
     // logout
     @ReactMethod
-    public void logout(final Promise promise) {
+    public void logout(Promise promise) {
         rtmClient.logout(new ResultCallback<Void>() {
             @Override
             public void onSuccess(Void args) {
@@ -164,55 +161,60 @@ public class AgoraRTMModule extends ReactContextBaseJavaModule
 
             @Override
             public void onFailure(ErrorInfo errorInfo) {
-                promise.reject(Integer.toString(errorInfo.getErrorCode()), errorInfo.getErrorDescription());
+                promise.reject(String.valueOf(errorInfo.getErrorCode()), errorInfo.getErrorDescription());
             }
         });
     }
 
     // renewToken
     @ReactMethod
-    public void renewToken(final String token, final Promise promise) {
+    public void renewToken(String token, Promise promise) {
         rtmClient.renewToken(token, new ResultCallback<Void>() {
             @Override
             public void onSuccess(Void aVoid) {
-                promise.resolve(aVoid);
+                promise.resolve(null);
             }
 
             @Override
             public void onFailure(ErrorInfo errorInfo) {
-                promise.reject(Integer.toString(errorInfo.getErrorCode()), errorInfo.getErrorDescription());
+                promise.reject(String.valueOf(errorInfo.getErrorCode()), errorInfo.getErrorDescription());
             }
         });
     }
 
     // sendMessageToPeer
     @ReactMethod
-    public void sendMessageToPeer(final ReadableMap params, final Promise promise) {
-        RtmMessage rtmMessage = rtmClient.createMessage();
-        String peerId = params.getString("peerId");
-        String message = params.getString("text");
-        Boolean enableOffline = params.getBoolean("offline");
+    public void sendMessageToPeer(ReadableMap params, Promise promise) {
+        boolean offline = false;
+        String text = null, peerId = null;
+        if (params.hasKey("offline"))
+            offline = params.getBoolean("offline");
+        if (params.hasKey("text"))
+            text = params.getString("text");
+        if (params.hasKey("peerId"))
+            peerId = params.getString("peerId");
+
         SendMessageOptions options = new SendMessageOptions();
-        options.enableOfflineMessaging = enableOffline;
-        rtmMessage.setText(message);
-        rtmClient.sendMessageToPeer(peerId, rtmMessage, options, new ResultCallback<Void>() {
+        options.enableOfflineMessaging = offline;
+        RtmMessage message = rtmClient.createMessage(text);
+        rtmClient.sendMessageToPeer(peerId, message, options, new ResultCallback<Void>() {
             @Override
             public void onSuccess(Void args) {
-                promise.resolve(args);
+                promise.resolve(null);
             }
 
             @Override
             public void onFailure(ErrorInfo errorInfo) {
-                promise.reject(Integer.toString(errorInfo.getErrorCode()), errorInfo.getErrorDescription());
+                promise.reject(String.valueOf(errorInfo.getErrorCode()), errorInfo.getErrorDescription());
             }
         });
     }
 
     // join channel
     @ReactMethod
-    public void joinChannel(final String channelId, final Promise promise) {
-        final RtmChannel rtmChannel = rtmClient.createChannel(channelId, this);
-        if (null == rtmChannel) {
+    public void joinChannel(String channelId, Promise promise) {
+        RtmChannel rtmChannel = rtmClient.createChannel(channelId, this);
+        if (rtmChannel == null) {
             promise.reject("-1", "channel_create_failed");
         } else {
             rtmChannel.join(new ResultCallback<Void>() {
@@ -223,39 +225,31 @@ public class AgoraRTMModule extends ReactContextBaseJavaModule
 
                 @Override
                 public void onFailure(ErrorInfo errorInfo) {
-                    promise.reject(Integer.toString(errorInfo.getErrorCode()), errorInfo.getErrorDescription());
+                    promise.reject(String.valueOf(errorInfo.getErrorCode()), errorInfo.getErrorDescription());
                 }
             });
             channels.put(channelId, rtmChannel);
         }
     }
 
-    // releaseChannel
-    @ReactMethod
-    public void releaseChannel(final String channelId) {
-        final RtmChannel rtmChannel = channels.get(channelId);
-        if (null != rtmChannel) {
-            rtmChannel.release();
-            channels.remove(channelId);
-        }
-    }
-
     // leave channel
     @ReactMethod
-    public void leaveChannel(final String channelId, final Promise promise) {
-        final RtmChannel rtmChannel = channels.get(channelId);
-        if (null == rtmChannel) {
+    public void leaveChannel(String channelId, Promise promise) {
+        RtmChannel rtmChannel = channels.get(channelId);
+        if (rtmChannel == null) {
             promise.reject("-1", "channel_not_found");
         } else {
             rtmChannel.leave(new ResultCallback<Void>() {
                 @Override
                 public void onSuccess(Void aVoid) {
+                    rtmChannel.release();
+                    channels.remove(channelId);
                     promise.resolve(null);
                 }
 
                 @Override
                 public void onFailure(ErrorInfo errorInfo) {
-                    promise.reject(Integer.toString(errorInfo.getErrorCode()), errorInfo.getErrorDescription());
+                    promise.reject(String.valueOf(errorInfo.getErrorCode()), errorInfo.getErrorDescription());
                 }
             });
         }
@@ -263,46 +257,48 @@ public class AgoraRTMModule extends ReactContextBaseJavaModule
 
     // get channel members by channelId
     @ReactMethod
-    public void getChannelMembersBychannelId(final String channelId, final Promise promise) {
+    public void getChannelMembersBychannelId(String channelId, Promise promise) {
         RtmChannel rtmChannel = channels.get(channelId);
-        if (null == rtmChannel) {
+        if (rtmChannel == null) {
             promise.reject("-1", "channel_not_found");
         } else {
             rtmChannel.getMembers(new ResultCallback<List<RtmChannelMember>>() {
                 @Override
                 public void onSuccess(List<RtmChannelMember> rtmChannelMembers) {
-                    WritableArray members = Arguments.createArray();
-                    for (RtmChannelMember member: rtmChannelMembers) {
+                    WritableArray exportMembers = Arguments.createArray();
+                    for (RtmChannelMember member : rtmChannelMembers) {
                         WritableMap memberData = Arguments.createMap();
                         memberData.putString("uid", member.getUserId());
                         memberData.putString("channelId", member.getChannelId());
-                        members.pushMap(memberData);
+                        exportMembers.pushMap(memberData);
                     }
                     WritableMap params = Arguments.createMap();
-                    params.putArray("members", members);
+                    params.putArray("members", exportMembers);
                     promise.resolve(params);
                 }
 
                 @Override
                 public void onFailure(ErrorInfo errorInfo) {
-                    promise.reject(Integer.toString(errorInfo.getErrorCode()), errorInfo.getErrorDescription());
+                    promise.reject(String.valueOf(errorInfo.getErrorCode()), errorInfo.getErrorDescription());
                 }
             });
         }
     }
 
-    // sned channel message by channel id
+    // send channel message by channel id
     @ReactMethod
-    public void sendMessageByChannelId(ReadableMap params, final Promise promise) {
-        final String channelId = params.getString("channelId");
-        final String text = params.getString("text");
-        RtmChannel rtmChannel = channels.get(channelId);
+    public void sendMessageByChannelId(ReadableMap params, Promise promise) {
+        String channelId = null, text = null;
+        if (params.hasKey("channelId"))
+            channelId = params.getString("channelId");
+        if (params.hasKey("text"))
+            text = params.getString("text");
 
-        if (null == rtmChannel) {
+        RtmChannel rtmChannel = channels.get(channelId);
+        if (rtmChannel == null) {
             promise.reject("-1", "channel_not_found");
         } else {
-            RtmMessage rtmMessage = rtmClient.createMessage();
-            rtmMessage.setText(text);
+            RtmMessage rtmMessage = rtmClient.createMessage(text);
             rtmChannel.sendMessage(rtmMessage, new ResultCallback<Void>() {
                 @Override
                 public void onSuccess(Void aVoid) {
@@ -311,7 +307,7 @@ public class AgoraRTMModule extends ReactContextBaseJavaModule
 
                 @Override
                 public void onFailure(ErrorInfo errorInfo) {
-                    promise.reject(Integer.toString(errorInfo.getErrorCode()), errorInfo.getErrorDescription());
+                    promise.reject(String.valueOf(errorInfo.getErrorCode()), errorInfo.getErrorDescription());
                 }
             });
         }
@@ -319,23 +315,28 @@ public class AgoraRTMModule extends ReactContextBaseJavaModule
 
     // query peer online status with ids
     @ReactMethod
-    public void queryPeersOnlineStatus(final ReadableMap params, final Promise promise) {
-        final ReadableArray ids = params.getArray("ids");
-        Set<String> sets = new HashSet<String>();
-        for (int i = 0; i < ids.size(); i++) {
-            sets.add(ids.getString(i));
-        }
-        rtmClient.queryPeersOnlineStatus(sets, new ResultCallback<Map<String, Boolean>>() {
+    public void queryPeersOnlineStatus(ReadableMap params, Promise promise) {
+        Set<String> ids = new HashSet<String>() {{
+            if (params.hasKey("ids")) {
+                ReadableArray ids = params.getArray("ids");
+                if (ids != null) {
+                    for (int i = 0; i < ids.size(); i++) {
+                        add(ids.getString(i));
+                    }
+                }
+            }
+        }};
+
+        rtmClient.queryPeersOnlineStatus(ids, new ResultCallback<Map<String, Boolean>>() {
             @Override
             public void onSuccess(Map<String, Boolean> result) {
+                if (result == null) return;
+
                 WritableArray items = Arguments.createArray();
-                Set<String> keys = result.keySet();
-                for (String key : keys) {
-                    boolean online = result.get(key);
-                    String uid = key;
+                for (String key : result.keySet()) {
                     WritableMap item = Arguments.createMap();
-                    item.putString("uid", uid);
-                    item.putBoolean("online", online);
+                    item.putBoolean("online", result.get(key));
+                    item.putString("uid", key);
                     items.pushMap(item);
                 }
                 WritableMap params = Arguments.createMap();
@@ -345,25 +346,28 @@ public class AgoraRTMModule extends ReactContextBaseJavaModule
 
             @Override
             public void onFailure(ErrorInfo errorInfo) {
-                promise.reject(Integer.toString(errorInfo.getErrorCode()), errorInfo.getErrorDescription());
+                promise.reject(String.valueOf(errorInfo.getErrorCode()), errorInfo.getErrorDescription());
             }
         });
     }
 
-
     // setup local user attributes
     @ReactMethod
-    public void setLocalUserAttributes(ReadableMap params, final Promise promise) {
-        ReadableArray attributesParam = params.getArray("attributes");
-        List<RtmAttribute> attributes = new LinkedList<RtmAttribute>();
-        for (int i = 0; i < attributesParam.size(); i++) {
-            RtmAttribute rtmAttribute = new RtmAttribute();
-            ReadableMap item = attributesParam.getMap(i);
-            rtmAttribute.setKey(item.getString("key"));
-            rtmAttribute.setValue(item.getString("value"));
-            attributes.add(rtmAttribute);
-        }
-        rtmClient.setLocalUserAttributes(attributes, new ResultCallback<Void> () {
+    public void setLocalUserAttributes(ReadableMap params, Promise promise) {
+        List<RtmAttribute> attributes = new LinkedList<RtmAttribute>() {{
+            if (params.hasKey("attributes")) {
+                ReadableArray attributes = params.getArray("attributes");
+                for (int i = 0; i < attributes.size(); i++) {
+                    ReadableMap attribute = attributes.getMap(i);
+                    RtmAttribute rtmAttribute = new RtmAttribute();
+                    rtmAttribute.setKey(attribute.getString("key"));
+                    rtmAttribute.setValue(attribute.getString("value"));
+                    add(rtmAttribute);
+                }
+            }
+        }};
+
+        rtmClient.setLocalUserAttributes(attributes, new ResultCallback<Void>() {
             @Override
             public void onSuccess(Void aVoid) {
                 promise.resolve(null);
@@ -371,24 +375,28 @@ public class AgoraRTMModule extends ReactContextBaseJavaModule
 
             @Override
             public void onFailure(ErrorInfo errorInfo) {
-                promise.reject(Integer.toString(errorInfo.getErrorCode()), errorInfo.getErrorDescription());
+                promise.reject(String.valueOf(errorInfo.getErrorCode()), errorInfo.getErrorDescription());
             }
         });
     }
 
     // replace local user attributes
     @ReactMethod
-    public void replaceLocalUserAttributes(ReadableMap params, final Promise promise) {
-        ReadableArray attributesParam = params.getArray("attributes");
-        List<RtmAttribute> attributes = new LinkedList<RtmAttribute>();
-        for (int i = 0; i < attributesParam.size(); i++) {
-            RtmAttribute rtmAttribute = new RtmAttribute();
-            ReadableMap item = attributesParam.getMap(i);
-            rtmAttribute.setKey(item.getString("key"));
-            rtmAttribute.setValue(item.getString("value"));
-            attributes.add(rtmAttribute);
-        }
-        rtmClient.addOrUpdateLocalUserAttributes(attributes, new ResultCallback<Void> () {
+    public void replaceLocalUserAttributes(ReadableMap params, Promise promise) {
+        List<RtmAttribute> attributes = new LinkedList<RtmAttribute>() {{
+            if (params.hasKey("attributes")) {
+                ReadableArray attributes = params.getArray("attributes");
+                for (int i = 0; i < attributes.size(); i++) {
+                    ReadableMap attribute = attributes.getMap(i);
+                    RtmAttribute rtmAttribute = new RtmAttribute();
+                    rtmAttribute.setKey(attribute.getString("key"));
+                    rtmAttribute.setValue(attribute.getString("value"));
+                    add(rtmAttribute);
+                }
+            }
+        }};
+
+        rtmClient.addOrUpdateLocalUserAttributes(attributes, new ResultCallback<Void>() {
             @Override
             public void onSuccess(Void aVoid) {
                 promise.resolve(null);
@@ -396,20 +404,24 @@ public class AgoraRTMModule extends ReactContextBaseJavaModule
 
             @Override
             public void onFailure(ErrorInfo errorInfo) {
-                promise.reject(Integer.toString(errorInfo.getErrorCode()), errorInfo.getErrorDescription());
+                promise.reject(String.valueOf(errorInfo.getErrorCode()), errorInfo.getErrorDescription());
             }
         });
     }
 
     // remove local user attributes by keys
     @ReactMethod
-    public void removeLocalUserAttributesByKeys(ReadableMap params, final Promise promise) {
-        List<String> list = new LinkedList<>();
-        ReadableArray array = params.getArray("keys");
-        for (int i = 0; i < array.size(); i++) {
-            list.add(array.getString(i));
-        }
-        rtmClient.deleteLocalUserAttributesByKeys(list, new ResultCallback<Void>() {
+    public void removeLocalUserAttributesByKeys(ReadableMap params, Promise promise) {
+        List<String> keys = new LinkedList<String>() {{
+            if (params.hasKey("keys")) {
+                ReadableArray keys = params.getArray("keys");
+                for (int i = 0; i < keys.size(); i++) {
+                    add(keys.getString(i));
+                }
+            }
+        }};
+
+        rtmClient.deleteLocalUserAttributesByKeys(keys, new ResultCallback<Void>() {
             @Override
             public void onSuccess(Void aVoid) {
                 promise.resolve(null);
@@ -417,14 +429,14 @@ public class AgoraRTMModule extends ReactContextBaseJavaModule
 
             @Override
             public void onFailure(ErrorInfo errorInfo) {
-                promise.reject(Integer.toString(errorInfo.getErrorCode()), errorInfo.getErrorDescription());
+                promise.reject(String.valueOf(errorInfo.getErrorCode()), errorInfo.getErrorDescription());
             }
         });
     }
 
     // remove all local user attributes
     @ReactMethod
-    public void removeAllLocalUserAttributes(final Promise promise) {
+    public void removeAllLocalUserAttributes(Promise promise) {
         rtmClient.clearLocalUserAttributes(new ResultCallback<Void>() {
             @Override
             public void onSuccess(Void aVoid) {
@@ -433,150 +445,155 @@ public class AgoraRTMModule extends ReactContextBaseJavaModule
 
             @Override
             public void onFailure(ErrorInfo errorInfo) {
-                promise.reject(Integer.toString(errorInfo.getErrorCode()), errorInfo.getErrorDescription());
+                promise.reject(String.valueOf(errorInfo.getErrorCode()), errorInfo.getErrorDescription());
             }
         });
     }
 
     // get local user attributes by uid
     @ReactMethod
-    public void getUserAttributesByUid(final String userId, final Promise promise) {
+    public void getUserAttributesByUid(String userId, Promise promise) {
         rtmClient.getUserAttributes(userId, new ResultCallback<List<RtmAttribute>>() {
             @Override
             public void onSuccess(List<RtmAttribute> rtmAttributes) {
-                WritableMap userAttributes = Arguments.createMap();
-                for (RtmAttribute attribute: rtmAttributes) {
-                    userAttributes.putString(attribute.getKey(), attribute.getValue());
+                WritableMap exportAttributes = Arguments.createMap();
+                for (RtmAttribute attribute : rtmAttributes) {
+                    exportAttributes.putString(attribute.getKey(), attribute.getValue());
                 }
                 WritableMap data = Arguments.createMap();
                 data.putString("uid", userId);
-                data.putMap("attributes", userAttributes);
+                data.putMap("attributes", exportAttributes);
                 promise.resolve(data);
             }
 
             @Override
             public void onFailure(ErrorInfo errorInfo) {
-                promise.reject(Integer.toString(errorInfo.getErrorCode()), errorInfo.getErrorDescription());
+                promise.reject(String.valueOf(errorInfo.getErrorCode()), errorInfo.getErrorDescription());
             }
         });
     }
 
-
     // send local invitation
     @ReactMethod
-    public void sendLocalInvitation (ReadableMap params, final Promise promise) {
-        final String calleeId = params.getString("uid");
-        final LocalInvitation localInvitation = rtmCallManager.createLocalInvitation(calleeId);
-        if(params.hasKey("content")) {
-            String content = params.getString("content");
-            localInvitation.setContent(content);
-        }
-        if(params.hasKey("channelId")) {
-            String channelId = params.getString("channelId");
-            localInvitation.setChannelId(channelId);
-        }
-        rtmCallManager.sendLocalInvitation(localInvitation, new ResultCallback<Void> () {
+    public void sendLocalInvitation(ReadableMap params, Promise promise) {
+        String calleeId = null, content = null, channelId = null;
+        if (params.hasKey("uid"))
+            calleeId = params.getString("uid");
+        if (params.hasKey("content"))
+            content = params.getString("content");
+        if (params.hasKey("channelId"))
+            channelId = params.getString("channelId");
+
+        LocalInvitation localInvitation = rtmCallManager.createLocalInvitation(calleeId);
+        localInvitation.setContent(content);
+        localInvitation.setChannelId(channelId);
+
+        String finalCalleeId = calleeId;
+        rtmCallManager.sendLocalInvitation(localInvitation, new ResultCallback<Void>() {
             @Override
             public void onSuccess(Void aVoid) {
-                localInvitations.put(calleeId, localInvitation);
+                localInvitations.put(finalCalleeId, localInvitation);
                 promise.resolve(null);
             }
 
             @Override
             public void onFailure(ErrorInfo errorInfo) {
-                promise.reject(Integer.toString(errorInfo.getErrorCode()), errorInfo.getErrorDescription());
+                promise.reject(String.valueOf(errorInfo.getErrorCode()), errorInfo.getErrorDescription());
             }
         });
     }
 
     // cancel local invitation
     @ReactMethod
-    public void cancelLocalInvitation (ReadableMap params, final Promise promise) {
-        final String calleeId = params.getString("uid");
-        if (null != localInvitations.get(calleeId)) {
-            final LocalInvitation localInvitation = localInvitations.get(calleeId);
-            if (params.hasKey("content")) {
-                String content = params.getString("content");
-                localInvitation.setContent(content);
-            }
-            if (params.hasKey("channelId")) {
-                String channelId = params.getString("channelId");
-                localInvitation.setChannelId(channelId);
-            }
+    public void cancelLocalInvitation(ReadableMap params, Promise promise) {
+        String calleeId = null;
+        if (params.hasKey("uid"))
+            calleeId = params.getString("uid");
 
-            rtmCallManager.cancelLocalInvitation(localInvitation, new ResultCallback<Void> () {
+        LocalInvitation localInvitation = localInvitations.get(calleeId);
+        if (localInvitation == null) {
+            promise.reject("-1", "local_invitation_not_found");
+        } else {
+            String finalCalleeId = calleeId;
+            rtmCallManager.cancelLocalInvitation(localInvitation, new ResultCallback<Void>() {
                 @Override
                 public void onSuccess(Void aVoid) {
-                    localInvitations.put(calleeId, localInvitation);
+                    localInvitations.remove(finalCalleeId);
                     promise.resolve(null);
                 }
 
                 @Override
                 public void onFailure(ErrorInfo errorInfo) {
-                    promise.reject(Integer.toString(errorInfo.getErrorCode()), errorInfo.getErrorDescription());
+                    promise.reject(String.valueOf(errorInfo.getErrorCode()), errorInfo.getErrorDescription());
                 }
             });
-        } else {
-            promise.reject("-1", "local_invitation_not_found");
         }
     }
 
     // accept remote invitation
     @ReactMethod
-    public void acceptRemoteInvitation (ReadableMap params, final Promise promise) {
-        final String calleeId = params.getString("uid");
-        if (null != remoteInvitations.get(calleeId)) {
-            final RemoteInvitation remoteInvitation = remoteInvitations.get(calleeId);
-            if (params.hasKey("response")) {
-                final String response = params.getString("response");
-                remoteInvitation.setResponse(response);
-            }
-            rtmCallManager.acceptRemoteInvitation(remoteInvitation, new ResultCallback<Void> () {
+    public void acceptRemoteInvitation(ReadableMap params, Promise promise) {
+        String callerId = null, response = null;
+        if (params.hasKey("uid"))
+            callerId = params.getString("uid");
+        if (params.hasKey("response"))
+            response = params.getString("response");
+
+        RemoteInvitation remoteInvitation = remoteInvitations.get(callerId);
+        if (remoteInvitation == null) {
+            promise.reject("-1", "remote_invitation_not_found");
+        } else {
+            remoteInvitation.setResponse(response);
+
+            String finalCallerId = callerId;
+            rtmCallManager.acceptRemoteInvitation(remoteInvitation, new ResultCallback<Void>() {
                 @Override
                 public void onSuccess(Void aVoid) {
-                    remoteInvitations.remove(remoteInvitation);
+                    remoteInvitations.remove(finalCallerId);
                     promise.resolve(null);
                 }
 
                 @Override
                 public void onFailure(ErrorInfo errorInfo) {
-                    promise.reject(Integer.toString(errorInfo.getErrorCode()), errorInfo.getErrorDescription());
+                    promise.reject(String.valueOf(errorInfo.getErrorCode()), errorInfo.getErrorDescription());
                 }
             });
-        } else {
-            promise.reject(Integer.toString(-1), "remote_invitation_not_found");
         }
     }
-
 
     // refuse remote invitation
     @ReactMethod
-    public void refuseRemoteInvitation (ReadableMap params, final Promise promise) {
-        final String calleeId = params.getString("uid");
-        if (null != remoteInvitations.get(calleeId)) {
-            final RemoteInvitation remoteInvitation = remoteInvitations.get(calleeId);
-            if (params.hasKey("response")) {
-                final String response = params.getString("response");
-                remoteInvitation.setResponse(response);
-            }
-            rtmCallManager.refuseRemoteInvitation(remoteInvitation, new ResultCallback<Void> () {
+    public void refuseRemoteInvitation(ReadableMap params, Promise promise) {
+        String callerId = null, response = null;
+        if (params.hasKey("uid"))
+            callerId = params.getString("uid");
+        if (params.hasKey("response"))
+            response = params.getString("response");
+
+        RemoteInvitation remoteInvitation = remoteInvitations.get(callerId);
+        if (remoteInvitation == null) {
+            promise.reject("-1", "remote_invitation_not_found");
+        } else {
+            remoteInvitation.setResponse(response);
+
+            String finalCallerId = callerId;
+            rtmCallManager.refuseRemoteInvitation(remoteInvitation, new ResultCallback<Void>() {
                 @Override
                 public void onSuccess(Void aVoid) {
-                    remoteInvitations.remove(remoteInvitation);
+                    remoteInvitations.remove(finalCallerId);
                     promise.resolve(null);
                 }
 
                 @Override
                 public void onFailure(ErrorInfo errorInfo) {
-                    promise.reject(Integer.toString(errorInfo.getErrorCode()), errorInfo.getErrorDescription());
+                    promise.reject(String.valueOf(errorInfo.getErrorCode()), errorInfo.getErrorDescription());
                 }
             });
-        } else {
-            promise.reject("-1", "remote_invitation_not_found");
         }
     }
 
-    // RtmClientListener
+    /* RtmClientListener */
+
     @Override
     public void onConnectionStateChanged(int state, int reason) {
         WritableMap params = Arguments.createMap();
@@ -586,7 +603,6 @@ public class AgoraRTMModule extends ReactContextBaseJavaModule
                 params);
     }
 
-    // p2p message received
     @Override
     public void onMessageReceived(RtmMessage rtmMessage, String peerId) {
         WritableMap params = Arguments.createMap();
@@ -599,12 +615,56 @@ public class AgoraRTMModule extends ReactContextBaseJavaModule
 
     @Override
     public void onTokenExpired() {
-        WritableMap params = Arguments.createMap();
-        params.putString("message", "token_expired");
-        sendEvent(AgoraRTMConstants.AG_TOKEN_EXPIRED, params);
+        sendEvent(AgoraRTMConstants.AG_TOKEN_EXPIRED, null);
     }
 
-    // RtmCallEventListener
+    @Override
+    public void onPeersOnlineStatusChanged(Map<String, Integer> map) {
+
+    }
+
+    /* RtmChannelListener */
+
+    @Override
+    public void onMemberJoined(RtmChannelMember rtmChannelMember) {
+        WritableMap message = Arguments.createMap();
+        message.putString("channelId", rtmChannelMember.getChannelId());
+        message.putString("uid", rtmChannelMember.getUserId());
+        sendEvent(AgoraRTMConstants.AG_CHANNELMEMBERJOINED, message);
+    }
+
+    @Override
+    public void onMemberLeft(RtmChannelMember rtmChannelMember) {
+        WritableMap message = Arguments.createMap();
+        message.putString("channelId", rtmChannelMember.getChannelId());
+        message.putString("uid", rtmChannelMember.getUserId());
+        sendEvent(AgoraRTMConstants.AG_CHANNELMEMBERLEFT, message);
+    }
+
+    @Override
+    public void onMessageReceived(RtmMessage rtmMessage, RtmChannelMember rtmChannelMember) {
+        WritableMap message = Arguments.createMap();
+        String uid = rtmChannelMember.getUserId();
+        message.putString("channelId", rtmChannelMember.getChannelId());
+        message.putString("uid", uid);
+        message.putString("text", rtmMessage.getText());
+        message.putDouble("ts", rtmMessage.getServerReceivedTs());
+        message.putBoolean("offline", rtmMessage.isOfflineMessage());
+        sendEvent(AgoraRTMConstants.AG_CHANNELMESSAGERECEVIED, message);
+    }
+
+    @Override
+    public void onAttributesUpdated(List<RtmChannelAttribute> list) {
+
+    }
+
+    @Override
+    public void onMemberCountUpdated(int i) {
+
+    }
+
+    /* RtmCallEventListener */
+
     @Override
     public void onLocalInvitationReceivedByPeer(LocalInvitation localInvitation) {
         WritableMap params = Arguments.createMap();
@@ -663,6 +723,8 @@ public class AgoraRTMModule extends ReactContextBaseJavaModule
 
     @Override
     public void onRemoteInvitationReceived(RemoteInvitation remoteInvitation) {
+        remoteInvitations.put(remoteInvitation.getCallerId(), remoteInvitation);
+
         WritableMap params = Arguments.createMap();
         params.putString("callerId", remoteInvitation.getCallerId());
         params.putString("content", remoteInvitation.getContent());
@@ -670,17 +732,6 @@ public class AgoraRTMModule extends ReactContextBaseJavaModule
         params.putString("channelId", remoteInvitation.getChannelId());
         params.putString("response", remoteInvitation.getResponse());
         sendEvent(AgoraRTMConstants.AG_REMOTEINVITATIONRECEIVED, params);
-    }
-
-    @Override
-    public void onRemoteInvitationAccepted(RemoteInvitation remoteInvitation) {
-        WritableMap params = Arguments.createMap();
-        params.putString("callerId", remoteInvitation.getCallerId());
-        params.putString("content", remoteInvitation.getContent());
-        params.putInt("state", remoteInvitation.getState());
-        params.putString("channelId", remoteInvitation.getChannelId());
-        params.putString("response", remoteInvitation.getResponse());
-        sendEvent(AgoraRTMConstants.AG_REMOTEINVITATIONACCEPTED, params);
     }
 
     @Override
@@ -692,6 +743,17 @@ public class AgoraRTMModule extends ReactContextBaseJavaModule
         params.putString("channelId", remoteInvitation.getChannelId());
         params.putString("response", remoteInvitation.getResponse());
         sendEvent(AgoraRTMConstants.AG_REMOTEINVITATIONREFUSED, params);
+    }
+
+    @Override
+    public void onRemoteInvitationAccepted(RemoteInvitation remoteInvitation) {
+        WritableMap params = Arguments.createMap();
+        params.putString("callerId", remoteInvitation.getCallerId());
+        params.putString("content", remoteInvitation.getContent());
+        params.putInt("state", remoteInvitation.getState());
+        params.putString("channelId", remoteInvitation.getChannelId());
+        params.putString("response", remoteInvitation.getResponse());
+        sendEvent(AgoraRTMConstants.AG_REMOTEINVITATIONACCEPTED, params);
     }
 
     @Override
@@ -712,46 +774,8 @@ public class AgoraRTMModule extends ReactContextBaseJavaModule
         params.putString("content", remoteInvitation.getContent());
         params.putInt("state", remoteInvitation.getState());
         params.putString("channelId", remoteInvitation.getChannelId());
-        params.putInt("code", code);
         params.putString("response", remoteInvitation.getResponse());
+        params.putInt("code", code);
         sendEvent(AgoraRTMConstants.AG_REMOTEINVITATIONFAILURE, params);
-    }
-
-    // RtmChannelListener
-    // channel message received
-    @Override
-    public void onMessageReceived(RtmMessage rtmMessage, RtmChannelMember rtmChannelMember) {
-        String channelId = rtmChannelMember.getChannelId();
-        String ts = Long.toString(rtmMessage.getServerReceivedTs());
-        String text = rtmMessage.getText();
-        boolean isOffline = rtmMessage.isOfflineMessage();
-        WritableMap message = Arguments.createMap();
-        String uid = rtmChannelMember.getUserId();
-        message.putString("channelId", channelId);
-        message.putString("uid", uid);
-        message.putString("text", text);
-        message.putString("ts", ts);
-        message.putBoolean("offline", isOffline);
-        sendEvent(AgoraRTMConstants.AG_CHANNELMESSAGERECEVIED, message);
-    }
-
-    @Override
-    public void onMemberJoined(RtmChannelMember rtmChannelMember) {
-        String channelId = rtmChannelMember.getChannelId();
-        String userId = rtmChannelMember.getUserId();
-        WritableMap message = Arguments.createMap();
-        message.putString("channelId", channelId);
-        message.putString("uid", userId);
-        sendEvent(AgoraRTMConstants.AG_CHANNELMEMBERJOINED, message);
-    }
-
-    @Override
-    public void onMemberLeft(RtmChannelMember rtmChannelMember) {
-        String channelId = rtmChannelMember.getChannelId();
-        String userId = rtmChannelMember.getUserId();
-        WritableMap message = Arguments.createMap();
-        message.putString("channelId", channelId);
-        message.putString("uid", userId);
-        sendEvent(AgoraRTMConstants.AG_CHANNELMEMBERLEFT, message);
     }
 }

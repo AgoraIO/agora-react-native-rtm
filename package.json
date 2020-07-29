@@ -6,8 +6,9 @@
   "main": "lib/RtmEngine.js",
   "types": "lib/RtmEngine.d.ts",
   "scripts": {
-    "build": "tsc",
-    "doc": "typedoc --options typedoc.js"
+    "build": "rm -rf lib && tsc",
+    "doc": "typedoc --options typedoc.js",
+    "prepublish": "npm run build"
   },
   "repository": {
     "type": "git",

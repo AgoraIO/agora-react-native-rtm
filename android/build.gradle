@@ -1,78 +1,27 @@
+def safeExtGet(prop, fallback) {
+    rootProject.ext.has(prop) ? rootProject.ext.get(prop) : fallback
+}
+
 apply plugin: 'com.android.library'
 
-allprojects {
-    gradle.projectsEvaluated {
-        tasks.withType(JavaCompile) {
-            options.encoding = 'utf-8'
-            options.compilerArgs << "-Xlint:deprecation"
-        }
-    }
-}
-
-buildscript {
-    repositories {
-        google()
-        jcenter()
-    }
-    dependencies {
-        classpath 'com.android.tools.build:gradle:3.1.2'
-    }
-}
-
-def DEFAULT_COMPILE_SDK_VERSION = 27
-def DEFAULT_BUILD_TOOLS_VERSION = "27.0.3"
-def DEFAULT_TARGET_SDK_VERSION = 27
-def DEFAULT_ANDROID_SUPPORT_VERSION = "27.1.0"
-
 android {
-    compileSdkVersion rootProject.hasProperty('compileSdkVersion') ? rootProject.compileSdkVersion : DEFAULT_COMPILE_SDK_VERSION
-    buildToolsVersion rootProject.hasProperty('buildToolsVersion') ? rootProject.buildToolsVersion : DEFAULT_BUILD_TOOLS_VERSION
+    compileSdkVersion safeExtGet('compileSdkVersion', 28)
+    buildToolsVersion safeExtGet('buildToolsVersion', '28.0.3')
 
     defaultConfig {
-        minSdkVersion 16
-        targetSdkVersion rootProject.hasProperty('targetSdkVersion') ? rootProject.targetSdkVersion : DEFAULT_TARGET_SDK_VERSION
-        versionCode 1
-        versionName "1.0"
+        minSdkVersion safeExtGet('minSdkVersion', 16)
+        targetSdkVersion safeExtGet('targetSdkVersion', 28)
 
-        testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
-
-    }
-    buildTypes {
-        release {
-            minifyEnabled false
-            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
-        }
+        consumerProguardFiles 'consumer-rules.pro'
     }
 
-    splits {
-        abi {
-            enable true
-
-            reset()
-
-            include "armeabi-v7a", "arm64-v8a", "x86"
-            // Specify that we do not want an additional universal SDK
-            universalApk false
-        }
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_1_8
+        targetCompatibility JavaVersion.VERSION_1_8
     }
 }
 
 dependencies {
-    def androidSupportVersion = rootProject.hasProperty("androidSupportVersion")  ? rootProject.androidSupportVersion : DEFAULT_ANDROID_SUPPORT_VERSION
-    // from internet
-    implementation "com.android.support:appcompat-v7:$androidSupportVersion"
-    implementation 'io.agora.rtm:rtm-sdk:1.2.2'
-    // from node_modules
     implementation "com.facebook.react:react-native:+"
+    implementation "io.agora.rtm:rtm-sdk:1.2.2"
 }
-
-repositories {
-    mavenCentral()
-    mavenLocal()
-    maven {
-        url "$rootDir/../node_modules/agora-react-native-rtm/android"
-    }
-    jcenter()
-    google()
-}
-

@@ -7,4 +7,4 @@ export const Logger = {
   }
 }
 
-export const APP_ID = 'Your Agora APPID'
+export const APP_ID = '2b4b76e458cf439aa7cd313b9504f0a4'
