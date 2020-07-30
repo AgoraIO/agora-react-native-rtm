@@ -1,7 +1,6 @@
-import { Logger } from './utils'
 import RtmEngine from 'agora-react-native-rtm'
-import { EventEmitter } from 'events'
-import { APP_ID } from './utils'
+import {EventEmitter} from 'events'
+import {APP_ID, Logger} from './utils'
 
 export default class RtmAdapter extends EventEmitter {
   private readonly client: RtmEngine
@@ -29,7 +28,7 @@ export default class RtmAdapter extends EventEmitter {
   }
 
   async login(uid: string): Promise<any> {
-    this.client.createClient(APP_ID)
+    await this.client.createClient(APP_ID)
     this.uid = uid
     return this.client.login({
       uid: this.uid
@@ -39,9 +38,6 @@ export default class RtmAdapter extends EventEmitter {
   async logout(): Promise<any> {
     await this.client.logout()
     Logger.log("logout success")
-    this.destroy()
-    Logger.log("destroy")
-    return;
   }
 
   async join(cid: string): Promise<any> {
@@ -56,7 +52,8 @@ export default class RtmAdapter extends EventEmitter {
     return this.client.sendMessageByChannelId(param.channel, param.message)
   }
 
-  destroy() {
-    this.client.destroyClient()
+  async destroy(): Promise<any> {
+    await this.client.destroyClient()
+    Logger.log("destroy")
   }
 }

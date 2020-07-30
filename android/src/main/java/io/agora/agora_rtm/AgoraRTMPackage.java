@@ -10,10 +10,12 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
-public class AgoraRTMPackage implements ReactPackage {
+import javax.annotation.Nonnull;
 
+public class AgoraRTMPackage implements ReactPackage {
+    @Nonnull
     @Override
-    public List<NativeModule> createNativeModules(ReactApplicationContext reactContext) {
+    public List<NativeModule> createNativeModules(@Nonnull ReactApplicationContext reactContext) {
         return Arrays.asList(new NativeModule[]{
                 new AgoraRTMModule(reactContext),
         });
@@ -23,9 +25,9 @@ public class AgoraRTMPackage implements ReactPackage {
         return Collections.emptyList();
     }
 
+    @Nonnull
     @Override
-    public List<ViewManager> createViewManagers(ReactApplicationContext reactContext) {
-        return Arrays.<ViewManager>asList(
-        );
+    public List<ViewManager> createViewManagers(@Nonnull ReactApplicationContext reactContext) {
+        return Collections.emptyList();
     }
 }

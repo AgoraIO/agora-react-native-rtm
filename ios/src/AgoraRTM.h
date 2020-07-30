@@ -13,7 +13,7 @@
 #import <AgoraRtmKit/AgoraRtmKit.h>
 
 @interface AgoraRTM : RCTEventEmitter <RCTBridgeModule, AgoraRtmChannelDelegate, AgoraRtmDelegate, AgoraRtmCallDelegate>
-- (void) sendEvent:(NSString *)msg params:(NSDictionary *)params;
+- (void)sendEvent:(NSString *)msg params:(NSDictionary *)params;
 @end
 
 #endif /* AgoraRTM_h */

@@ -17,16 +17,6 @@ const Toolbar = (props: any) => (
 const SubPageToolBar = (props: any) => {
   const ctx = useContext(AppContext)
   const onPress = () => {
-    console.log("invoke leave")
-    ctx.client.leave(ctx.channel).then(() => {
-      console.log("leave success")
-      ctx.client.logout().then(() => {
-        // TODO: add logout code here.
-      })
-    }).catch(() => {
-      // TODO: handle leave failure case.
-      console.log("leave failured")
-    })
     props.navigation.goBack()
   }
 
@@ -44,7 +34,7 @@ const PageContainer = (children: any) => {
 
   const StackContainer = (_props: any) => {
     return (
-      <Comp {..._props}></Comp>
+      <Comp {..._props}/>
     )
   }
 

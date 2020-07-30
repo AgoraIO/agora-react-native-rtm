@@ -1,6 +1,4 @@
 apply plugin: "com.android.application"
-apply from: "../../node_modules/react-native-vector-icons/fonts.gradle"
-
 
 import com.android.build.OutputFile
 
@@ -109,6 +107,10 @@ android {
         targetSdkVersion rootProject.ext.targetSdkVersion
         versionCode 1
         versionName "1.0"
+
+        ndk {
+            abiFilters "armeabi-v7a", "x86"
+        }
     }
     splits {
         abi {
@@ -140,9 +142,9 @@ android {
 }
 
 dependencies {
-    implementation project(':agora-react-native-rtm')
     implementation project(':react-native-vector-icons')
     implementation project(':react-native-gesture-handler')
+    implementation project(':agora-react-native-rtm')
     implementation fileTree(dir: "libs", include: ["*.jar"])
     implementation "com.android.support:appcompat-v7:${rootProject.ext.supportLibVersion}"
     implementation "com.facebook.react:react-native:+"  // From node_modules

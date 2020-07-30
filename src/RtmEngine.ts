@@ -1,23 +1,24 @@
+import {EmitterSubscription, NativeEventEmitter, NativeModules,} from 'react-native';
+
 import {
-  RTMEventCallback,
-  Callback,
-  UserInfo,
   AgoraPeerMessage,
-  UserAttribute,
-  LocalInvitationProps,
-  RemoteInvitationProps,
-  Members,
-  ListPeerStatus,
-  UserProfile,
+  Callback,
   ConnectionState,
-  RTMLocalInvitationMessage,
+  ListPeerStatus,
+  LocalInvitationProps,
+  Members,
+  RemoteInvitationProps,
+  RTMChannelMessage,
+  RTMEventCallback,
   RTMLocalInvitationErrorMessage,
+  RTMLocalInvitationMessage,
+  RTMMemberInfo,
   RTMRemoteInvitationErrorMessage,
   RTMRemoteInvitationMessage,
-  RTMChannelMessage,
-  RTMMemberInfo,
-} from './types.d';
-
+  UserAttribute,
+  UserInfo,
+  UserProfile,
+} from './types';
 
 export interface RtmEngineEvents {
   /**
@@ -30,14 +31,14 @@ export interface RtmEngineEvents {
   /**
    * @event
    * @param evt The received event object {@link ConnectionState}
-   * connectionStateChanged | occurs when connection state changed | 
+   * connectionStateChanged | occurs when connection state changed |
    */
   connectionStateChanged: (evt: ConnectionState) => void
 
   /**
    * @event
    * @param evt The received event object {@link RTMPeerMessage}
-   * messageReceived | occurs when message received | 
+   * messageReceived | occurs when message received |
    */
   messageReceived: (evt: any) => void
 
@@ -51,7 +52,7 @@ export interface RtmEngineEvents {
   /**
    * @event
    * @param evt The received event object {@link RTMLocalInvitationMessage}
-   * localInvitationAccepted | occurs when local invitation accepted | 
+   * localInvitationAccepted | occurs when local invitation accepted |
    */
   localInvitationAccepted: (evt: RTMLocalInvitationMessage) => void
 
@@ -70,7 +71,7 @@ export interface RtmEngineEvents {
   localInvitationCanceled: (evt: RTMLocalInvitationMessage) => void
 
   /**
-   * @event 
+   * @event
    * @param evt The received event object {@link RTMLocalInvitationErrorMessage}
    * localInvitationFailure | occurs when local invitation failure |
    */
@@ -98,30 +99,30 @@ export interface RtmEngineEvents {
   remoteInvitationAccepted: (evt: RTMRemoteInvitationMessage) => void
 
   /**
-    * @event
-    * @param evt The received event object {@link RTMRemoteInvitationMessage}
-    * remoteInvitationRefused | occurs when remote invitation refused |
-    */
+   * @event
+   * @param evt The received event object {@link RTMRemoteInvitationMessage}
+   * remoteInvitationRefused | occurs when remote invitation refused |
+   */
   remoteInvitationRefused: (evt: RTMRemoteInvitationMessage) => void
 
   /**
-    * @event
-    * @param evt The received event object {@link RTMRemoteInvitationMessage}
-    * remoteInvitationCanceled | occurs when remote invitation canceled |
-    */
+   * @event
+   * @param evt The received event object {@link RTMRemoteInvitationMessage}
+   * remoteInvitationCanceled | occurs when remote invitation canceled |
+   */
   remoteInvitationCanceled: (evt: RTMRemoteInvitationMessage) => void
 
   /**
-    * @event
-    * @param evt The received event object {@link RTMChannelMessage}
-    * channelMessageReceived | occurs when received channel message |
+   * @event
+   * @param evt The received event object {@link RTMChannelMessage}
+   * channelMessageReceived | occurs when received channel message |
    */
   channelMessageReceived: (evt: RTMChannelMessage) => void
 
   /**
-    * @event
-    * @param evt The received event object {@link RTMMemberInfo}
-    * channelMemberJoined | occurs when some one joined in the subscribed channel
+   * @event
+   * @param evt The received event object {@link RTMMemberInfo}
+   * channelMemberJoined | occurs when some one joined in the subscribed channel
    */
   channelMemberJoined: (evt: RTMMemberInfo) => void
 
@@ -145,27 +146,17 @@ export enum LogLevel {
   INFO = 0x0f,
   WARNING = 0x0e,
   ERROR = 0x0c,
-  CRITICAL =0x08
-};
+  CRITICAL = 0x08
+}
 
-import {
-  NativeModules,
-  NativeEventEmitter,
-  EmitterSubscription,
-} from 'react-native';
-
-const { AgoraRTM } = NativeModules;
+const {AgoraRTM} = NativeModules;
 
 /**
  * `RtmEngine` is the entry point of the react native agora rtm sdk. You can call the {@link createClient} method of {@link RtmEngine} to create an `RtmEngine` instance.
  * @noInheritDoc
  */
 export default class RtmEngine {
-
   static init: boolean = false;
-
-  // sdk version
-  private static readonly version: string = '1.0.0-alpha.1';
 
   // internal event identifiy for RtmEngine
   private static readonly AG_RTMCHANNEL = "ag_rtm_";
@@ -177,7 +168,7 @@ export default class RtmEngine {
   private readonly internalEventSubscriptions: EmitterSubscription[];
 
   // create RtmEngine instance
-  constructor () {
+  constructor() {
     this.events = new NativeEventEmitter(AgoraRTM);
     this.internalEventSubscriptions = [];
   }
@@ -186,7 +177,7 @@ export default class RtmEngine {
    * get the version of rtm sdk
    * @param callback (version) => {} required
    */
-  getSdkVersion (callback: Callback): void {
+  getSdkVersion(callback: Callback): void {
     AgoraRTM.getSdkVersion(callback);
   }
 
@@ -198,14 +189,14 @@ export default class RtmEngine {
    * Note File size settings of less than 512 KB or greater than 10 MB will not take effect.
    * @return Promise<any> This method will return {path: boolean, level: boolean, size: boolean}
    */
-  setSdkLog (path: string, level: LogLevel, size: number): Promise<any> {
+  setSdkLog(path: string, level: LogLevel, size: number): Promise<any> {
     return AgoraRTM.setSdkLog(path, level, size)
   }
 
   /**
    * supports platform: ios, android
    * @events {@link RtmEngineEvents}
-   * @param evtName string required
+   * @param eventName string required
    * @param callback (evt) => {} required
    */
   on<EventName extends keyof RtmEngineEvents>(eventName: EventName, callback: RTMEventCallback) {
@@ -219,15 +210,14 @@ export default class RtmEngine {
    * @param appId String
    * @return void
    */
-  createClient(appId: string): void {
-    if (RtmEngine.init === true) return;
-    AgoraRTM.init(appId);
+  async createClient(appId: string): Promise<void> {
+    if (RtmEngine.init) return;
+    await AgoraRTM.init(appId);
     RtmEngine.init = true;
-    return;
   }
 
   // removeEvents
-  removeEvents () {
+  removeEvents() {
     for (let i = this.internalEventSubscriptions.length; i >= 0; i--) {
       if (this.internalEventSubscriptions[i]) {
         this.internalEventSubscriptions[i].remove();
@@ -239,15 +229,13 @@ export default class RtmEngine {
   /**
    * supports platform: ios, android
    * This method destroy AgoraRTM instance, stop event observing, release all both remote and local invitaitons and channels resources.
-   * @param void
    * @return void
    */
-  destroyClient(): void {
-    if (RtmEngine.init === false) return;
+  async destroyClient(): Promise<void> {
+    if (!RtmEngine.init) return;
     this.removeEvents();
-    AgoraRTM.destroy();
+    await AgoraRTM.destroy();
     RtmEngine.init = false;
-    return;
   }
 
   /**
@@ -323,11 +311,11 @@ export default class RtmEngine {
    * This method enables you get members by channel id.
    * @param channelId string.
    * @return Promise<Members> {@link Members}}
-   * 
+   *
    * ---
    * members | {@link MemberInfo} |
    * ---
-   * 
+   *
    * MemberInfo
    * ---
    * uid | string | user id|
@@ -358,7 +346,7 @@ export default class RtmEngine {
    * ---
    * items | {@link MemberStatus} |
    * ---
-   * 
+   *
    * MemberStatus
    * ---
    * uid | string | user id|
@@ -374,9 +362,9 @@ export default class RtmEngine {
    * This method enables set local user attributes with attributes {@link UserAttribute}
    * @param attributes {@link UserAttribute []}
    * @return Promise<any>
-   * 
+   *
    * UserAttribute
-   * --- 
+   * ---
    * key | string | required |
    * value | string | required |
    * ---
@@ -408,7 +396,6 @@ export default class RtmEngine {
   /**
    * supports platform: ios, android
    * This method enables you to remove all of local user attributes;
-   * @param void
    * @return Promise<any>
    */
   removeAllLocalUserAttributes(): Promise<any> {
@@ -430,14 +417,14 @@ export default class RtmEngine {
    * This method enables send local invitation with invitationProps.
    * NOTICE: content bytelength has MAX_SIZE 32kb limit.
    * @param invitationProps {@link LocalInvitationProps}
-   * 
+   *
    * LocalInvitationProps
    * ---
    * uid | string | required |
    * channelId | string | required |
    * content | string | optional | 32kb limit |
    * ---
-   * 
+   *
    * @return Promise<any>
    */
   sendLocalInvitation(invitationProps: LocalInvitationProps): Promise<any> {
@@ -449,14 +436,14 @@ export default class RtmEngine {
    * This method enables cancel local invitation with invitationProps.
    * NOTICE: content bytelength has MAX_SIZE 32kb limit.
    * @param invitationProps {@link LocalInvitationProps}
-   * 
+   *
    * LocalInvitationProps
    * ---
    * uid | string | required |
    * channelId | string | required |
    * content | string | optional | 32kb limit |
    * ---
-   * 
+   *
    * @return Promies<any>
    */
   cancelLocalInvitation(invitationProps: LocalInvitationProps): Promise<any> {
@@ -467,15 +454,15 @@ export default class RtmEngine {
    * supports platform: ios, android
    * This method enables accept remote invitation with RemoteInvitationProps.
    * NOTICE: content bytelength has MAX_SIZE 32kb limit.
-   * @param invitationProps {@link RemoteInvitationProps}
-   * 
+   * @param remoteInvitationProps {@link RemoteInvitationProps}
+   *
    * RemoteInvitationProps
    * ---
    * uid | string | required |
    * channelId | string | required |
    * response | string | optional | 32kb limit |
    * ---
-   * 
+   *
    * @return Promise<any>
    */
   acceptRemoteInvitation(remoteInvitationProps: RemoteInvitationProps): Promise<any> {
@@ -486,19 +473,18 @@ export default class RtmEngine {
    * supports platform: ios, android
    * This method enables refuse remote invitation with RemoteInvitationProps.
    * NOTICE: content bytelength has MAX_SIZE 32kb limit.
-   * @param invitationProps {@link RemoteInvitationProps}
-   * 
+   * @param remoteInvitationProps {@link RemoteInvitationProps}
+   *
    * RemoteInvitationProps
    * ---
    * uid | string | required |
    * channelId | string | required |
    * response | string | optional | 32kb limit |
    * ---
-   * 
+   *
    * @return Promise<any>
    */
   refuseRemoteInvitation(remoteInvitationProps: RemoteInvitationProps): Promise<any> {
     return AgoraRTM.refuseRemoteInvitation(remoteInvitationProps);
   }
-
 };
