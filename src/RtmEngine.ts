@@ -466,7 +466,7 @@ export default class RtmEngine {
    * @return Promise<any>
    */
   acceptRemoteInvitation(remoteInvitationProps: RemoteInvitationProps): Promise<any> {
-    return AgoraRTM.sendRemoteInvitation(remoteInvitationProps);
+    return AgoraRTM.acceptRemoteInvitation(remoteInvitationProps);
   }
 
   /**

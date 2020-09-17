@@ -1,6 +1,6 @@
 {
   "name": "agora-react-native-rtm",
-  "version": "1.2.2-alpha.1",
+  "version": "1.2.2-alpha.2",
   "description": "React Native around the Agora RTM SDKs for Android and iOS agora",
   "summary": "agora native rtm sdk for react-native",
   "main": "lib/RtmEngine.js",
