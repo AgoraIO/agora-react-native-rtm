@@ -1,7 +1,5 @@
 package io.agora.agora_rtm;
 
-import android.support.annotation.Nullable;
-
 import com.facebook.react.bridge.Arguments;
 import com.facebook.react.bridge.Callback;
 import com.facebook.react.bridge.Promise;
@@ -22,6 +20,7 @@ import java.util.Map;
 import java.util.Set;
 
 import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 
 import io.agora.rtm.ErrorInfo;
 import io.agora.rtm.LocalInvitation;

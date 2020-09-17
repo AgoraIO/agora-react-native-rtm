@@ -1,5 +1,8 @@
 ## CHANGELOG
 
+### release 1.2.2-alpha.3
+  * fix android `annotation` issue
+
 ### release 1.2.2-alpha.2
   * fix `acceptRemoteInvitation` crash
   * fix iOS `invitation` event listener crash
