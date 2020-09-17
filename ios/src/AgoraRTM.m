@@ -602,50 +602,50 @@ RCT_EXPORT_METHOD(refuseRemoteInvitation:
 - (void)rtmCallKit:(AgoraRtmCallKit *_Nonnull)callKit localInvitationReceivedByPeer:(AgoraRtmLocalInvitation *_Nonnull)localInvitation {
     [self sendEvent:AG_LOCALINVITATIONRECEIVEDBYPEER params:@{
             @"calleeId": localInvitation.calleeId,
-            @"content": localInvitation.content,
+            @"content": localInvitation.content ? localInvitation.content : [NSNull null],
             @"state": @(localInvitation.state),
-            @"channelId": localInvitation.channelId,
-            @"response": localInvitation.response
+            @"channelId": localInvitation.channelId ? localInvitation.channelId : [NSNull null],
+            @"response": localInvitation.response ? localInvitation.response : [NSNull null]
     }];
 }
 
 - (void)rtmCallKit:(AgoraRtmCallKit *_Nonnull)callKit localInvitationAccepted:(AgoraRtmLocalInvitation *_Nonnull)localInvitation withResponse:(NSString *_Nullable)response {
     [self sendEvent:AG_LOCALINVITATIONACCEPTED params:@{
             @"calleeId": localInvitation.calleeId,
-            @"content": localInvitation.content,
+            @"content": localInvitation.content ? localInvitation.content : [NSNull null],
             @"state": @(localInvitation.state),
-            @"channelId": localInvitation.channelId,
-            @"response": localInvitation.response
+            @"channelId": localInvitation.channelId ? localInvitation.channelId : [NSNull null],
+            @"response": localInvitation.response ? localInvitation.response : [NSNull null]
     }];
 }
 
 - (void)rtmCallKit:(AgoraRtmCallKit *_Nonnull)callKit localInvitationRefused:(AgoraRtmLocalInvitation *_Nonnull)localInvitation withResponse:(NSString *_Nullable)response {
     [self sendEvent:AG_LOCALINVITATIONREFUSED params:@{
             @"calleeId": localInvitation.calleeId,
-            @"content": localInvitation.content,
+            @"content": localInvitation.content ? localInvitation.content : [NSNull null],
             @"state": @(localInvitation.state),
-            @"channelId": localInvitation.channelId,
-            @"response": localInvitation.response
+            @"channelId": localInvitation.channelId ? localInvitation.channelId : [NSNull null],
+            @"response": localInvitation.response ? localInvitation.response : [NSNull null]
     }];
 }
 
 - (void)rtmCallKit:(AgoraRtmCallKit *_Nonnull)callKit localInvitationCanceled:(AgoraRtmLocalInvitation *_Nonnull)localInvitation {
     [self sendEvent:AG_LOCALINVITATIONCANCELED params:@{
             @"calleeId": localInvitation.calleeId,
-            @"content": localInvitation.content,
+            @"content": localInvitation.content ? localInvitation.content : [NSNull null],
             @"state": @(localInvitation.state),
-            @"channelId": localInvitation.channelId,
-            @"response": localInvitation.response
+            @"channelId": localInvitation.channelId ? localInvitation.channelId : [NSNull null],
+            @"response": localInvitation.response ? localInvitation.response : [NSNull null]
     }];
 }
 
 - (void)rtmCallKit:(AgoraRtmCallKit *_Nonnull)callKit localInvitationFailure:(AgoraRtmLocalInvitation *_Nonnull)localInvitation errorCode:(AgoraRtmLocalInvitationErrorCode)errorCode {
     [self sendEvent:AG_LOCALINVITATIONFAILURE params:@{
             @"calleeId": localInvitation.calleeId,
-            @"content": localInvitation.content,
+            @"content": localInvitation.content ? localInvitation.content : [NSNull null],
             @"state": @(localInvitation.state),
-            @"channelId": localInvitation.channelId,
-            @"response": localInvitation.response,
+            @"channelId": localInvitation.channelId ? localInvitation.channelId : [NSNull null],
+            @"response": localInvitation.response ? localInvitation.response : [NSNull null],
             @"code": @(errorCode)
     }];
 }
@@ -655,50 +655,50 @@ RCT_EXPORT_METHOD(refuseRemoteInvitation:
 
     [self sendEvent:AG_REMOTEINVITATIONRECEIVED params:@{
             @"callerId": remoteInvitation.callerId,
-            @"content": remoteInvitation.content,
+            @"content": remoteInvitation.content ? remoteInvitation.content : [NSNull null],
             @"state": @(remoteInvitation.state),
-            @"channelId": remoteInvitation.channelId,
-            @"response": remoteInvitation.response
+            @"channelId": remoteInvitation.channelId ? remoteInvitation.channelId : [NSNull null],
+            @"response": remoteInvitation.response ? remoteInvitation.response : [NSNull null]
     }];
 }
 
 - (void)rtmCallKit:(AgoraRtmCallKit *_Nonnull)callKit remoteInvitationRefused:(AgoraRtmRemoteInvitation *_Nonnull)remoteInvitation {
     [self sendEvent:AG_REMOTEINVITATIONREFUSED params:@{
             @"callerId": remoteInvitation.callerId,
-            @"content": remoteInvitation.content,
+            @"content": remoteInvitation.content ? remoteInvitation.content : [NSNull null],
             @"state": @(remoteInvitation.state),
-            @"channelId": remoteInvitation.channelId,
-            @"response": remoteInvitation.response
+            @"channelId": remoteInvitation.channelId ? remoteInvitation.channelId : [NSNull null],
+            @"response": remoteInvitation.response ? remoteInvitation.response : [NSNull null]
     }];
 }
 
 - (void)rtmCallKit:(AgoraRtmCallKit *_Nonnull)callKit remoteInvitationAccepted:(AgoraRtmRemoteInvitation *_Nonnull)remoteInvitation {
     [self sendEvent:AG_REMOTEINVITATIONACCEPTED params:@{
             @"callerId": remoteInvitation.callerId,
-            @"content": remoteInvitation.content,
+            @"content": remoteInvitation.content ? remoteInvitation.content : [NSNull null],
             @"state": @(remoteInvitation.state),
-            @"channelId": remoteInvitation.channelId,
-            @"response": remoteInvitation.response
+            @"channelId": remoteInvitation.channelId ? remoteInvitation.channelId : [NSNull null],
+            @"response": remoteInvitation.response ? remoteInvitation.response : [NSNull null]
     }];
 }
 
 - (void)rtmCallKit:(AgoraRtmCallKit *_Nonnull)callKit remoteInvitationCanceled:(AgoraRtmRemoteInvitation *_Nonnull)remoteInvitation {
     [self sendEvent:AG_REMOTEINVITATIONCANCELED params:@{
             @"callerId": remoteInvitation.callerId,
-            @"content": remoteInvitation.content,
+            @"content": remoteInvitation.content ? remoteInvitation.content : [NSNull null],
             @"state": @(remoteInvitation.state),
-            @"channelId": remoteInvitation.channelId,
-            @"response": remoteInvitation.response
+            @"channelId": remoteInvitation.channelId ? remoteInvitation.channelId : [NSNull null],
+            @"response": remoteInvitation.response ? remoteInvitation.response : [NSNull null]
     }];
 }
 
 - (void)rtmCallKit:(AgoraRtmCallKit *_Nonnull)callKit remoteInvitationFailure:(AgoraRtmRemoteInvitation *_Nonnull)remoteInvitation errorCode:(AgoraRtmRemoteInvitationErrorCode)errorCode {
     [self sendEvent:AG_REMOTEINVITATIONFAILURE params:@{
             @"callerId": remoteInvitation.callerId,
-            @"content": remoteInvitation.content,
+            @"content": remoteInvitation.content ? remoteInvitation.content : [NSNull null],
             @"state": @(remoteInvitation.state),
-            @"channelId": remoteInvitation.channelId,
-            @"response": remoteInvitation.response,
+            @"channelId": remoteInvitation.channelId ? remoteInvitation.channelId : [NSNull null],
+            @"response": remoteInvitation.response ? remoteInvitation.response : [NSNull null],
             @"code": @(errorCode)
     }];
 }

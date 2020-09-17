@@ -8,7 +8,7 @@
     "lint": "tslint 'src/**/*.{ts,tsx}"
   },
   "dependencies": {
-    "agora-react-native-rtm": "^1.2.2-alpha.1",
+    "agora-react-native-rtm": "^1.2.2-alpha.3",
     "events": "3.0.0",
     "react": "16.8.3",
     "react-native": "0.59.10",
