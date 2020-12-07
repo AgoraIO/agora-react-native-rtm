@@ -7,700 +7,873 @@
 
 #import "AgoraRTM.h"
 #import "AgoraConst.h"
+#import "Extensions.h"
 
 @interface AgoraRTM ()
 @property(strong, nonatomic) AgoraRtmKit *rtmKit;
-@property(strong, nonatomic) AgoraRtmCallKit *rtmCallKit;
-@property(strong, nonatomic) NSMutableDictionary<NSString *, AgoraRtmChannel *> *channels;
-@property(strong, nonatomic) NSMutableDictionary<NSString *, AgoraRtmLocalInvitation *> *localInvitations;
-@property(strong, nonatomic) NSMutableDictionary<NSString *, AgoraRtmRemoteInvitation *> *remoteInvitations;
+@property(strong, nonatomic)
+    NSMutableDictionary<NSString *, AgoraRtmChannel *> *channels;
+@property(strong, nonatomic)
+    NSMutableDictionary<NSNumber *, AgoraRtmLocalInvitation *>
+        *localInvitations;
+@property(strong, nonatomic)
+    NSMutableDictionary<NSNumber *, AgoraRtmRemoteInvitation *>
+        *remoteInvitations;
 @end
 
 @implementation AgoraRTM {
-    BOOL hasListeners;
+  BOOL hasListeners;
 }
 
 - (instancetype)init {
-    self = [super init];
-    if (self) {
-        self.channels = [NSMutableDictionary dictionary];
-        self.localInvitations = [NSMutableDictionary dictionary];
-        self.remoteInvitations = [NSMutableDictionary dictionary];
-    }
-    return self;
+  self = [super init];
+  if (self) {
+    self.channels = [NSMutableDictionary dictionary];
+    self.localInvitations = [NSMutableDictionary dictionary];
+    self.remoteInvitations = [NSMutableDictionary dictionary];
+  }
+  return self;
 }
 
 + (BOOL)requiresMainQueueSetup {
-    return YES;
+  return YES;
 }
 
 RCT_EXPORT_MODULE(AgoraRTM);
 
 - (void)startObserving {
-    hasListeners = YES;
+  hasListeners = YES;
 }
 
 - (void)stopObserving {
-    hasListeners = NO;
+  hasListeners = NO;
 }
 
-- (void)sendEvent:(NSString *)msg params:(NSDictionary *)params {
-    if (hasListeners) {
-        [self sendEventWithName:msg body:params];
-    }
+- (void)sendEvent:(NSString *)msg params:(NSArray *)params {
+  if (hasListeners) {
+    [self sendEventWithName:msg body:params];
+  }
+}
+
+- (NSDictionary *)constantsToExport {
+  return @{@"prefix" : @"io.agora.rtm."};
 }
 
 - (NSArray<NSString *> *)supportedEvents {
-    return @[
-            AG_ERROR,
-            AG_CONNECTIONSTATECHANGED,
-            AG_MESSAGERECEIVED,
-            AG_LOCALINVITATIONRECEIVEDBYPEER,
-            AG_LOCALINVITATIONACCEPTED,
-            AG_LOCALINVITATIONREFUSED,
-            AG_LOCALINVITATIONCANCELED,
-            AG_LOCALINVITATIONFAILURE,
-            AG_REMOTEINVITATIONFAILURE,
-            AG_REMOTEINVITATIONRECEIVED,
-            AG_REMOTEINVITATIONACCEPTED,
-            AG_REMOTEINVITATIONREFUSED,
-            AG_REMOTEINVITATIONCANCELED,
-            AG_CHANNELMESSAGERECEVIED,
-            AG_CHANNELMEMBERJOINED,
-            AG_CHANNELMEMBERLEFT,
-            AG_TOKEN_EXPIRED
-    ];
+  return @[
+    ConnectionStateChanged, MessageReceived, LocalInvitationReceivedByPeer,
+    LocalInvitationAccepted, LocalInvitationRefused, LocalInvitationCanceled,
+    LocalInvitationFailure, RemoteInvitationFailure, RemoteInvitationReceived,
+    RemoteInvitationAccepted, RemoteInvitationRefused, RemoteInvitationCanceled,
+    ChannelMessageReceived, ChannelMemberJoined, ChannelMemberLeft,
+    TokenExpired, PeersOnlineStatusChanged, ChannelAttributesUpdated,
+    MemberCountUpdated
+  ];
 }
 
-// init AgoraRTM instance, set event observing and init it's internal resources
-RCT_EXPORT_METHOD(init:
-    (NSString *) appId
-            resolve:
-            (RCTPromiseResolveBlock) resolve
-            reject:
-            (RCTPromiseRejectBlock) reject) {
-    self.rtmKit = [[AgoraRtmKit new] initWithAppId:appId delegate:self];
-    self.rtmCallKit = [[self rtmKit] getRtmCallKit];
-    self.rtmCallKit.callDelegate = self;
-    [self startObserving];
-    resolve(nil);
+RCT_EXPORT_METHOD(destroy
+                  : (RCTPromiseResolveBlock)resolve reject
+                  : (RCTPromiseRejectBlock)reject) {
+  [self stopObserving];
+  [self.localInvitations removeAllObjects];
+  [self.remoteInvitations removeAllObjects];
+  for (NSString *key in self.channels) {
+    [self.rtmKit destroyChannelWithId:key];
+  }
+  [self.channels removeAllObjects];
+  self.rtmKit = nil;
+  resolve(nil);
 }
 
-// destroy AgoraRTM instance, remove event observing and it's internal resources
-RCT_EXPORT_METHOD(destroy:
-    (RCTPromiseResolveBlock) resolve
-            reject:
-            (RCTPromiseRejectBlock) reject) {
-    [self stopObserving];
-    [self.localInvitations removeAllObjects];
-    [self.remoteInvitations removeAllObjects];
-    for (NSString *key in self.channels) {
-        [self.rtmKit destroyChannelWithId:key];
+RCT_EXPORT_METHOD(login
+                  : (NSDictionary *)params resolve
+                  : (RCTPromiseResolveBlock)resolve reject
+                  : (RCTPromiseRejectBlock)reject) {
+  [self.rtmKit loginByToken:params[@"token"]
+                       user:params[@"userId"]
+                 completion:^(AgoraRtmLoginErrorCode errorCode) {
+                   if (errorCode == AgoraRtmLoginErrorOk) {
+                     resolve(nil);
+                   } else {
+                     reject(@(errorCode).stringValue, @"", nil);
+                   }
+                 }];
+}
+
+RCT_EXPORT_METHOD(logout
+                  : (RCTPromiseResolveBlock)resolve reject
+                  : (RCTPromiseRejectBlock)reject) {
+  [self.rtmKit logoutWithCompletion:^(AgoraRtmLogoutErrorCode errorCode) {
+    if (errorCode == AgoraRtmLogoutErrorOk) {
+      resolve(nil);
+    } else {
+      reject(@(errorCode).stringValue, @"", nil);
     }
-    [self.channels removeAllObjects];
-    self.rtmCallKit = nil;
-    self.rtmKit = nil;
+  }];
+}
+
+RCT_EXPORT_METHOD(sendMessageToPeer
+                  : (NSDictionary *)params resolve
+                  : (RCTPromiseResolveBlock)resolve reject
+                  : (RCTPromiseRejectBlock)reject) {
+  [self.rtmKit sendMessage:[Extensions mapToRtmMessage:params]
+                    toPeer:params[@"peerId"]
+        sendMessageOptions:[Extensions mapToSendMessageOptions:params]
+                completion:^(AgoraRtmSendPeerMessageErrorCode errorCode) {
+                  if (errorCode == AgoraRtmSendPeerMessageErrorOk) {
+                    resolve(nil);
+                  } else {
+                    reject(@(errorCode).stringValue, @"", nil);
+                  }
+                }];
+}
+
+RCT_EXPORT_METHOD(queryPeersOnlineStatus
+                  : (NSDictionary *)params resolve
+                  : (RCTPromiseResolveBlock)resolve reject
+                  : (RCTPromiseRejectBlock)reject) {
+  [self.rtmKit
+      queryPeersOnlineStatus:[Extensions mapToPeerIds:params]
+                  completion:^(
+                      NSArray<AgoraRtmPeerOnlineStatus *> *peerOnlineStatus,
+                      AgoraRtmQueryPeersOnlineErrorCode errorCode) {
+                    if (errorCode == AgoraRtmQueryPeersOnlineErrorOk) {
+                      NSMutableDictionary *ret = [NSMutableDictionary new];
+                      for (AgoraRtmPeerOnlineStatus *item in peerOnlineStatus) {
+                        ret[item.peerId] = @(item.isOnline);
+                      }
+                      resolve(ret);
+                    } else {
+                      reject(@(errorCode).stringValue, @"", nil);
+                    }
+                  }];
+}
+
+RCT_EXPORT_METHOD(subscribePeersOnlineStatus
+                  : (NSDictionary *)params resolve
+                  : (RCTPromiseResolveBlock)resolve reject
+                  : (RCTPromiseRejectBlock)reject) {
+  [self.rtmKit
+      subscribePeersOnlineStatus:[Extensions mapToPeerIds:params]
+                      completion:^(
+                          AgoraRtmPeerSubscriptionStatusErrorCode errorCode) {
+                        if (errorCode ==
+                            AgoraRtmPeerSubscriptionStatusErrorOk) {
+                          resolve(nil);
+                        } else {
+                          reject(@(errorCode).stringValue, @"", nil);
+                        }
+                      }];
+}
+
+RCT_EXPORT_METHOD(unsubscribePeersOnlineStatus
+                  : (NSDictionary *)params resolve
+                  : (RCTPromiseResolveBlock)resolve reject
+                  : (RCTPromiseRejectBlock)reject) {
+  [self.rtmKit
+      unsubscribePeersOnlineStatus:[Extensions mapToPeerIds:params]
+                        completion:^(
+                            AgoraRtmPeerSubscriptionStatusErrorCode errorCode) {
+                          if (errorCode ==
+                              AgoraRtmPeerSubscriptionStatusErrorOk) {
+                            resolve(nil);
+                          } else {
+                            reject(@(errorCode).stringValue, @"", nil);
+                          }
+                        }];
+}
+
+RCT_EXPORT_METHOD(queryPeersBySubscriptionOption
+                  : (NSDictionary *)params resolve
+                  : (RCTPromiseResolveBlock)resolve reject
+                  : (RCTPromiseRejectBlock)reject) {
+  [self.rtmKit
+      queryPeersBySubscriptionOption:params[@"option"]
+                          completion:^(
+                              NSArray<NSString *> *peers,
+                              AgoraRtmQueryPeersBySubscriptionOptionErrorCode
+                                  errorCode) {
+                            if (errorCode ==
+                                AgoraRtmQueryPeersBySubscriptionOptionErrorOk) {
+                              resolve(peers);
+                            } else {
+                              reject(@(errorCode).stringValue, @"", nil);
+                            }
+                          }];
+}
+
+RCT_EXPORT_METHOD(renewToken
+                  : (NSDictionary *)params resolve
+                  : (RCTPromiseResolveBlock)resolve reject
+                  : (RCTPromiseRejectBlock)reject) {
+  [self.rtmKit
+      renewToken:params[@"token"]
+      completion:^(NSString *token, AgoraRtmRenewTokenErrorCode errorCode) {
+        if (errorCode == AgoraRtmRenewTokenErrorOk) {
+          resolve(nil);
+        } else {
+          reject(@(errorCode).stringValue, @"", nil);
+        }
+      }];
+}
+
+RCT_EXPORT_METHOD(setLocalUserAttributes
+                  : (NSDictionary *)params resolve
+                  : (RCTPromiseResolveBlock)resolve reject
+                  : (RCTPromiseRejectBlock)reject) {
+  [self.rtmKit
+      setLocalUserAttributes:[Extensions mapToUserAttributes:params]
+                  completion:^(AgoraRtmProcessAttributeErrorCode errorCode) {
+                    if (errorCode == AgoraRtmAttributeOperationErrorOk) {
+                      resolve(nil);
+                    } else {
+                      reject(@(errorCode).stringValue, @"", nil);
+                    }
+                  }];
+}
+
+RCT_EXPORT_METHOD(addOrUpdateLocalUserAttributes
+                  : (NSDictionary *)params resolve
+                  : (RCTPromiseResolveBlock)resolve reject
+                  : (RCTPromiseRejectBlock)reject) {
+  [self.rtmKit
+      addOrUpdateLocalUserAttributes:[Extensions mapToUserAttributes:params]
+                          completion:^(
+                              AgoraRtmProcessAttributeErrorCode errorCode) {
+                            if (errorCode ==
+                                AgoraRtmAttributeOperationErrorOk) {
+                              resolve(nil);
+                            } else {
+                              reject(@(errorCode).stringValue, @"", nil);
+                            }
+                          }];
+}
+
+RCT_EXPORT_METHOD(deleteLocalUserAttributesByKeys
+                  : (NSDictionary *)params resolve
+                  : (RCTPromiseResolveBlock)resolve reject
+                  : (RCTPromiseRejectBlock)reject) {
+  [self.rtmKit
+      deleteLocalUserAttributesByKeys:[Extensions mapToAttributeKeys:params]
+                           completion:^(
+                               AgoraRtmProcessAttributeErrorCode errorCode) {
+                             if (errorCode ==
+                                 AgoraRtmAttributeOperationErrorOk) {
+                               resolve(nil);
+                             } else {
+                               reject(@(errorCode).stringValue, @"", nil);
+                             }
+                           }];
+}
+
+RCT_EXPORT_METHOD(clearLocalUserAttributes
+                  : (RCTPromiseResolveBlock)resolve reject
+                  : (RCTPromiseRejectBlock)reject) {
+  [self.rtmKit clearLocalUserAttributesWithCompletion:^(
+                   AgoraRtmProcessAttributeErrorCode errorCode) {
+    if (errorCode == AgoraRtmAttributeOperationErrorOk) {
+      resolve(nil);
+    } else {
+      reject(@(errorCode).stringValue, @"", nil);
+    }
+  }];
+}
+
+RCT_EXPORT_METHOD(getUserAttributes
+                  : (NSDictionary *)params resolve
+                  : (RCTPromiseResolveBlock)resolve reject
+                  : (RCTPromiseRejectBlock)reject) {
+  [self.rtmKit
+      getUserAllAttributes:params[@"userId"]
+                completion:^(NSArray<AgoraRtmAttribute *> *_Nullable attributes,
+                             NSString *userId,
+                             AgoraRtmProcessAttributeErrorCode errorCode) {
+                  if (errorCode == AgoraRtmAttributeOperationErrorOk) {
+                    NSMutableArray *ret = [NSMutableArray new];
+                    for (AgoraRtmAttribute *item in attributes) {
+                      [ret addObject:[Extensions rtmAttributeToMap:item]];
+                    }
+                    resolve(ret);
+                  } else {
+                    reject(@(errorCode).stringValue, @"", nil);
+                  }
+                }];
+}
+
+RCT_EXPORT_METHOD(getUserAttributesByKeys
+                  : (NSDictionary *)params resolve
+                  : (RCTPromiseResolveBlock)resolve reject
+                  : (RCTPromiseRejectBlock)reject) {
+  [self.rtmKit
+      getUserAttributes:params[@"userId"]
+                 ByKeys:[Extensions mapToAttributeKeys:params]
+             completion:^(NSArray<AgoraRtmAttribute *> *_Nullable attributes,
+                          NSString *userId,
+                          AgoraRtmProcessAttributeErrorCode errorCode) {
+               if (errorCode == AgoraRtmAttributeOperationErrorOk) {
+                 NSMutableArray *ret = [NSMutableArray new];
+                 for (AgoraRtmAttribute *item in attributes) {
+                   [ret addObject:[Extensions rtmAttributeToMap:item]];
+                 }
+                 resolve(ret);
+               } else {
+                 reject(@(errorCode).stringValue, @"", nil);
+               }
+             }];
+}
+
+RCT_EXPORT_METHOD(setChannelAttributes
+                  : (NSDictionary *)params resolve
+                  : (RCTPromiseResolveBlock)resolve reject
+                  : (RCTPromiseRejectBlock)reject) {
+  [self.rtmKit setChannel:params[@"channelId"]
+               Attributes:[Extensions mapToChannelAttributes:params]
+                  Options:[Extensions mapToChannelAttributeOptions:params]
+               completion:^(AgoraRtmProcessAttributeErrorCode errorCode) {
+                 if (errorCode == AgoraRtmAttributeOperationErrorOk) {
+                   resolve(nil);
+                 } else {
+                   reject(@(errorCode).stringValue, @"", nil);
+                 }
+               }];
+}
+
+RCT_EXPORT_METHOD(addOrUpdateChannelAttributes
+                  : (NSDictionary *)params resolve
+                  : (RCTPromiseResolveBlock)resolve reject
+                  : (RCTPromiseRejectBlock)reject) {
+  [self.rtmKit
+      addOrUpdateChannel:params[@"channelId"]
+              Attributes:[Extensions mapToChannelAttributes:params]
+                 Options:[Extensions mapToChannelAttributeOptions:params]
+              completion:^(AgoraRtmProcessAttributeErrorCode errorCode) {
+                if (errorCode == AgoraRtmAttributeOperationErrorOk) {
+                  resolve(nil);
+                } else {
+                  reject(@(errorCode).stringValue, @"", nil);
+                }
+              }];
+}
+
+RCT_EXPORT_METHOD(deleteChannelAttributesByKeys
+                  : (NSDictionary *)params resolve
+                  : (RCTPromiseResolveBlock)resolve reject
+                  : (RCTPromiseRejectBlock)reject) {
+  [self.rtmKit deleteChannel:params[@"channelId"]
+            AttributesByKeys:[Extensions mapToAttributeKeys:params]
+                     Options:[Extensions mapToChannelAttributeOptions:params]
+                  completion:^(AgoraRtmProcessAttributeErrorCode errorCode) {
+                    if (errorCode == AgoraRtmAttributeOperationErrorOk) {
+                      resolve(nil);
+                    } else {
+                      reject(@(errorCode).stringValue, @"", nil);
+                    }
+                  }];
+}
+
+RCT_EXPORT_METHOD(clearChannelAttributes
+                  : (NSDictionary *)params resolve
+                  : (RCTPromiseResolveBlock)resolve reject
+                  : (RCTPromiseRejectBlock)reject) {
+  [self.rtmKit clearChannel:params[@"channelId"]
+                       Options:[Extensions mapToChannelAttributeOptions:params]
+      AttributesWithCompletion:^(AgoraRtmProcessAttributeErrorCode errorCode) {
+        if (errorCode == AgoraRtmAttributeOperationErrorOk) {
+          resolve(nil);
+        } else {
+          reject(@(errorCode).stringValue, @"", nil);
+        }
+      }];
+}
+
+RCT_EXPORT_METHOD(getChannelAttributes
+                  : (NSDictionary *)params resolve
+                  : (RCTPromiseResolveBlock)resolve reject
+                  : (RCTPromiseRejectBlock)reject) {
+  [self.rtmKit
+      getChannelAllAttributes:params[@"channelId"]
+                   completion:^(NSArray<AgoraRtmChannelAttribute *>
+                                    *_Nullable attributes,
+                                AgoraRtmProcessAttributeErrorCode errorCode) {
+                     if (errorCode == AgoraRtmAttributeOperationErrorOk) {
+                       NSMutableArray *ret = [NSMutableArray new];
+                       for (AgoraRtmChannelAttribute *item in attributes) {
+                         [ret addObject:[Extensions
+                                            rtmChannelAttributeToMap:item]];
+                       }
+                       resolve(ret);
+                     } else {
+                       reject(@(errorCode).stringValue, @"", nil);
+                     }
+                   }];
+}
+
+RCT_EXPORT_METHOD(getChannelAttributesByKeys
+                  : (NSDictionary *)params resolve
+                  : (RCTPromiseResolveBlock)resolve reject
+                  : (RCTPromiseRejectBlock)reject) {
+  [self.rtmKit
+      getChannelAttributes:params[@"channelId"]
+                    ByKeys:[Extensions mapToAttributeKeys:params]
+                completion:^(
+                    NSArray<AgoraRtmChannelAttribute *> *_Nullable attributes,
+                    AgoraRtmProcessAttributeErrorCode errorCode) {
+                  if (errorCode == AgoraRtmAttributeOperationErrorOk) {
+                    NSMutableArray *ret = [NSMutableArray new];
+                    for (AgoraRtmChannelAttribute *item in attributes) {
+                      [ret
+                          addObject:[Extensions rtmChannelAttributeToMap:item]];
+                    }
+                    resolve(ret);
+                  } else {
+                    reject(@(errorCode).stringValue, @"", nil);
+                  }
+                }];
+}
+
+RCT_EXPORT_METHOD(setParameters
+                  : (NSDictionary *)params resolve
+                  : (RCTPromiseResolveBlock)resolve reject
+                  : (RCTPromiseRejectBlock)reject) {
+  int res = [self.rtmKit setParameters:params[@"parameters"]];
+  if (res == 0) {
     resolve(nil);
+  } else {
+    reject(@(res).stringValue, @"", nil);
+  }
+}
+
+RCT_EXPORT_METHOD(setLogFile
+                  : (NSDictionary *)params resolve
+                  : (RCTPromiseResolveBlock)resolve reject
+                  : (RCTPromiseRejectBlock)reject) {
+  int res = [self.rtmKit setLogFile:params[@"filePath"]];
+  if (res == 0) {
+    resolve(nil);
+  } else {
+    reject(@(res).stringValue, @"", nil);
+  }
+}
+
+RCT_EXPORT_METHOD(setLogFilter
+                  : (NSDictionary *)params resolve
+                  : (RCTPromiseResolveBlock)resolve reject
+                  : (RCTPromiseRejectBlock)reject) {
+  int res = [self.rtmKit setLogFilters:params[@"filter"]];
+  if (res == 0) {
+    resolve(nil);
+  } else {
+    reject(@(res).stringValue, @"", nil);
+  }
+}
+
+RCT_EXPORT_METHOD(setLogFileSize
+                  : (NSDictionary *)params resolve
+                  : (RCTPromiseResolveBlock)resolve reject
+                  : (RCTPromiseRejectBlock)reject) {
+  int res = [self.rtmKit setLogFileSize:params[@"fileSizeInKBytes"]];
+  if (res == 0) {
+    resolve(nil);
+  } else {
+    reject(@(res).stringValue, @"", nil);
+  }
+}
+
+RCT_EXPORT_METHOD(createInstance
+                  : (NSString *)appId resolve
+                  : (RCTPromiseResolveBlock)resolve reject
+                  : (RCTPromiseRejectBlock)reject) {
+  self.rtmKit = [[AgoraRtmKit new] initWithAppId:appId delegate:self];
+  [self.rtmKit getRtmCallKit].callDelegate = self;
+  [self startObserving];
+  resolve(nil);
 }
 
 // get sdk version
-RCT_EXPORT_METHOD(getSdkVersion:
-    (RCTResponseSenderBlock) callback) {
-    callback(@[[AgoraRtmKit getSDKVersion]]);
+RCT_EXPORT_METHOD(getSdkVersion
+                  : (RCTPromiseResolveBlock)resolve reject
+                  : (RCTPromiseRejectBlock)reject) {
+  resolve([AgoraRtmKit getSDKVersion]);
 }
 
-// set sdk log
-RCT_EXPORT_METHOD(setSdkLog:
-    (NSString *) path
-            level:
-            (NSInteger) level
-            size:
-            (NSInteger) size
-            resolve:
-            (RCTPromiseResolveBlock) resolve
-            reject:
-            (RCTPromiseRejectBlock) reject) {
-    int setpath = [self.rtmKit setLogFile:path];
-    int setlevel = [self.rtmKit setLogFilters:(AgoraRtmLogFilter) level];
-    int setsize = [self.rtmKit setLogFileSize:(int) size];
-
-    resolve(@{
-            @"path": @(setpath == 0),
-            @"size": @(setsize == 0),
-            @"level": @(setlevel == 0)
-    });
-}
-
-// login
-RCT_EXPORT_METHOD(login:
-    (NSDictionary *) params
-            resolve:
-            (RCTPromiseResolveBlock) resolve
-            reject:
-            (RCTPromiseRejectBlock) reject) {
-    NSString *token = params[@"token"];
-    NSString *uid = params[@"uid"];
-
-    [[self rtmKit] loginByToken:token user:uid completion:^(AgoraRtmLoginErrorCode errorCode) {
-        if (errorCode == AgoraRtmLoginErrorOk) {
-            resolve(nil);
-        } else {
-            reject(@(errorCode).stringValue, @"", nil);
-        }
-    }];
-}
-
-// logout
-RCT_EXPORT_METHOD(logout:
-    (RCTPromiseResolveBlock) resolve
-            reject:
-            (RCTPromiseRejectBlock) reject) {
-    [[self rtmKit] logoutWithCompletion:^(AgoraRtmLogoutErrorCode errorCode) {
-        if (errorCode == AgoraRtmLogoutErrorOk) {
-            resolve(nil);
-        } else {
-            reject(@(errorCode).stringValue, @"", nil);
-        }
-    }];
-}
-
-// renewToken
-RCT_EXPORT_METHOD(renewToken:
-    (NSString *) token
-            resolve:
-            (RCTPromiseResolveBlock) resolve
-            reject:
-            (RCTPromiseRejectBlock) reject) {
-    [[self rtmKit] renewToken:token completion:^(NSString *token, AgoraRtmRenewTokenErrorCode errorCode) {
-        if (errorCode == AgoraRtmRenewTokenErrorOk) {
-            resolve(nil);
-        } else {
-            reject(@(errorCode).stringValue, @"", nil);
-        }
-    }];
-}
-
-// sendMessageToPeer
-RCT_EXPORT_METHOD(sendMessageToPeer:
-    (NSDictionary *) params
-            resolve:
-            (RCTPromiseResolveBlock) resolve
-            reject:
-            (RCTPromiseRejectBlock) reject) {
-    BOOL offline = [params[@"offline"] boolValue];
-    NSString *text = params[@"text"];
-    NSString *peerId = params[@"peerId"];
-
-    AgoraRtmSendMessageOptions *options = [AgoraRtmSendMessageOptions new];
-    [options setEnableOfflineMessaging:offline];
-    AgoraRtmMessage *message = [[AgoraRtmMessage new] initWithText:text];
-    [[self rtmKit] sendMessage:message toPeer:peerId sendMessageOptions:options completion:^(AgoraRtmSendPeerMessageErrorCode errorCode) {
-        if (errorCode == AgoraRtmSendPeerMessageErrorOk) {
-            resolve(nil);
-        } else {
-            reject(@(errorCode).stringValue, @"", nil);
-        }
-    }];
-}
-
-// join channel
-RCT_EXPORT_METHOD(joinChannel:
-    (NSString *) channelId
-            resolve:
-            (RCTPromiseResolveBlock) resolve
-            reject:
-            (RCTPromiseRejectBlock) reject) {
-    AgoraRtmChannel *rtmChannel = [self.rtmKit createChannelWithId:channelId delegate:self];
-    if (rtmChannel == nil) {
-        reject(@"-1", @"channel_create_failed", nil);
+RCT_EXPORT_METHOD(joinChannel
+                  : (NSDictionary *)params resolve
+                  : (RCTPromiseResolveBlock)resolve reject
+                  : (RCTPromiseRejectBlock)reject) {
+  AgoraRtmChannel *rtmChannel = [self getRtmChannel:params
+                                             reject:reject
+                                               init:YES];
+  if (rtmChannel == nil)
+    return;
+  self.channels[params[@"channelId"]] = rtmChannel;
+  [rtmChannel joinWithCompletion:^(AgoraRtmJoinChannelErrorCode errorCode) {
+    if (errorCode == AgoraRtmJoinChannelErrorOk) {
+      resolve(nil);
     } else {
-        [rtmChannel joinWithCompletion:^(AgoraRtmJoinChannelErrorCode errorCode) {
-            if (errorCode == AgoraRtmJoinChannelErrorOk) {
-                resolve(nil);
-            } else {
-                reject(@(errorCode).stringValue, @"", nil);
-            }
-        }];
-        self.channels[channelId] = rtmChannel;
+      reject(@(errorCode).stringValue, @"", nil);
     }
+  }];
 }
 
-// leave channel
-RCT_EXPORT_METHOD(leaveChannel:
-    (NSString *) channelId
-            resolve:
-            (RCTPromiseResolveBlock) resolve
-            reject:
-            (RCTPromiseRejectBlock) reject) {
-    AgoraRtmChannel *rtmChannel = self.channels[channelId];
-    if (rtmChannel == nil) {
-        reject(@"-1", @"channel_not_found", nil);
+RCT_EXPORT_METHOD(leaveChannel
+                  : (NSDictionary *)params resolve
+                  : (RCTPromiseResolveBlock)resolve reject
+                  : (RCTPromiseRejectBlock)reject) {
+  AgoraRtmChannel *rtmChannel = [self getRtmChannel:params
+                                             reject:reject
+                                               init:NO];
+  if (rtmChannel == nil)
+    return;
+  [rtmChannel leaveWithCompletion:^(AgoraRtmLeaveChannelErrorCode errorCode) {
+    if (errorCode == AgoraRtmLeaveChannelErrorOk) {
+      resolve(nil);
     } else {
-        __weak typeof(self) weakSelf = self;
-        [rtmChannel leaveWithCompletion:^(AgoraRtmLeaveChannelErrorCode errorCode) {
-            if (errorCode == AgoraRtmLeaveChannelErrorOk) {
-                [weakSelf.rtmKit destroyChannelWithId:channelId];
-                [weakSelf.channels removeObjectForKey:channelId];
-                resolve(nil);
-            } else {
-                reject(@(errorCode).stringValue, @"", nil);
-            }
-        }];
+      reject(@(errorCode).stringValue, @"", nil);
     }
+  }];
 }
 
-// get channel members by channelId
-RCT_EXPORT_METHOD(getChannelMembersBychannelId:
-    (NSString *) channelId
-            resolve:
-            (RCTPromiseResolveBlock) resolve
-            reject:
-            (RCTPromiseRejectBlock) reject) {
-    AgoraRtmChannel *rtmChannel = self.channels[channelId];
-    if (rtmChannel == nil) {
-        reject(@"-1", @"channel_not_found", nil);
-    } else {
-        [rtmChannel getMembersWithCompletion:^(NSArray<AgoraRtmMember *> *_Nullable members, AgoraRtmGetMembersErrorCode errorCode) {
-            if (errorCode == AgoraRtmGetMembersErrorOk) {
-                NSMutableArray<NSDictionary *> *exportMembers = [NSMutableArray new];
-                for (AgoraRtmMember *member in members) {
-                    [exportMembers addObject:@{
-                            @"uid": member.userId,
-                            @"channelId": member.channelId
-                    }];
-                }
-                resolve(@{@"members": exportMembers});
-            } else {
-                reject(@(errorCode).stringValue, @"", nil);
-            }
-        }];
-    }
+RCT_EXPORT_METHOD(sendMessage
+                  : (NSDictionary *)params resolve
+                  : (RCTPromiseResolveBlock)resolve reject
+                  : (RCTPromiseRejectBlock)reject) {
+  AgoraRtmChannel *rtmChannel = [self getRtmChannel:params
+                                             reject:reject
+                                               init:NO];
+  if (rtmChannel == nil)
+    return;
+  [rtmChannel sendMessage:[Extensions mapToRtmMessage:params]
+       sendMessageOptions:[Extensions mapToSendMessageOptions:params]
+               completion:^(AgoraRtmSendChannelMessageErrorCode errorCode) {
+                 if (errorCode == AgoraRtmSendChannelMessageErrorOk) {
+                   resolve(nil);
+                 } else {
+                   reject(@(errorCode).stringValue, @"", nil);
+                 }
+               }];
 }
 
-// send channel message by channel id
-RCT_EXPORT_METHOD(sendMessageByChannelId:
-    (NSDictionary *) params
-            resolve:
-            (RCTPromiseResolveBlock) resolve
-            reject:
-            (RCTPromiseRejectBlock) reject) {
-    NSString *channelId = params[@"channelId"];
-    NSString *text = params[@"text"];
-
-    AgoraRtmChannel *rtmChannel = self.channels[channelId];
-    if (rtmChannel == nil) {
-        reject(@"-1", @"channel_not_found", nil);
-    } else {
-        AgoraRtmMessage *message = [[AgoraRtmMessage new] initWithText:text];
-        [rtmChannel sendMessage:message completion:^(AgoraRtmSendChannelMessageErrorCode errorCode) {
-            if (errorCode == AgoraRtmSendChannelMessageErrorOk) {
-                resolve(nil);
-            } else {
-                reject(@(errorCode).stringValue, @"", nil);
-            }
-        }];
-    }
-}
-
-// query peer online status with ids
-RCT_EXPORT_METHOD(queryPeersOnlineStatus:
-    (NSDictionary *) params
-            resolve:
-            (RCTPromiseResolveBlock) resolve
-            reject:
-            (RCTPromiseRejectBlock) reject) {
-    NSArray *ids = params[@"ids"];
-
-    [[self rtmKit] queryPeersOnlineStatus:ids completion:^(NSArray<AgoraRtmPeerOnlineStatus *> *peerOnlineStatus, AgoraRtmQueryPeersOnlineErrorCode errorCode) {
-        if (errorCode == AgoraRtmQueryPeersOnlineErrorOk) {
-            NSMutableArray<NSDictionary *> *items = [NSMutableArray new];
-            for (AgoraRtmPeerOnlineStatus *item in peerOnlineStatus) {
-                [items addObject:@{
-                        @"online": @(item.isOnline),
-                        @"uid": item.peerId,
-                }];
-            }
-            resolve(@{@"items": items});
+RCT_EXPORT_METHOD(getMembers
+                  : (NSDictionary *)params resolve
+                  : (RCTPromiseResolveBlock)resolve reject
+                  : (RCTPromiseRejectBlock)reject) {
+  AgoraRtmChannel *rtmChannel = [self getRtmChannel:params
+                                             reject:reject
+                                               init:NO];
+  if (rtmChannel == nil)
+    return;
+  [rtmChannel
+      getMembersWithCompletion:^(NSArray<AgoraRtmMember *> *_Nullable members,
+                                 AgoraRtmGetMembersErrorCode errorCode) {
+        if (errorCode == AgoraRtmGetMembersErrorOk) {
+          NSMutableArray *ret = [NSMutableArray new];
+          for (AgoraRtmMember *item in members) {
+            [ret addObject:[Extensions rtmMemberToMap:item]];
+          }
+          resolve(ret);
         } else {
-            reject(@(errorCode).stringValue, @"", nil);
+          reject(@(errorCode).stringValue, @"", nil);
         }
-    }];
+      }];
 }
 
-// setup local user attributes
-RCT_EXPORT_METHOD(setLocalUserAttributes:
-    (NSDictionary *) params
-            resolve:
-            (RCTPromiseResolveBlock) resolve
-            reject:
-            (RCTPromiseRejectBlock) reject) {
-    NSMutableArray<AgoraRtmAttribute *> *attributes = [[NSMutableArray<AgoraRtmAttribute *> alloc] init];
-    for (NSDictionary *attribute in params[@"attributes"]) {
-        AgoraRtmAttribute *rtmAttribute = [[AgoraRtmAttribute alloc] init];
-        rtmAttribute.key = attribute[@"key"];
-        rtmAttribute.value = attribute[@"value"];
-        [attributes addObject:rtmAttribute];
+RCT_EXPORT_METHOD(releaseChannel
+                  : (NSDictionary *)params resolve
+                  : (RCTPromiseResolveBlock)resolve reject
+                  : (RCTPromiseRejectBlock)reject) {
+  AgoraRtmChannel *rtmChannel = [self getRtmChannel:params
+                                             reject:reject
+                                               init:NO];
+  if (rtmChannel == nil)
+    return;
+  [self.channels removeObjectForKey:params[@"channelId"]];
+  resolve(nil);
+}
+
+- (AgoraRtmChannel *)getRtmChannel:(NSDictionary *)params
+                            reject:(RCTPromiseRejectBlock)reject
+                              init:(BOOL)init {
+  NSString *channelId = params[@"channelId"];
+  AgoraRtmChannel *rtmChannel = [self.channels objectForKey:channelId];
+  if (rtmChannel == nil) {
+    if (init) {
+      return [self.rtmKit createChannelWithId:channelId delegate:self];
     }
-
-    [self.rtmKit setLocalUserAttributes:attributes completion:^(AgoraRtmProcessAttributeErrorCode errorCode) {
-        if (errorCode == AgoraRtmAttributeOperationErrorOk) {
-            resolve(nil);
-        } else {
-            reject(@(errorCode).stringValue, @"", nil);
-        }
-    }];
+    reject(@"101", @"", nil);
+  }
+  return rtmChannel;
 }
 
-// replace local user attributes
-RCT_EXPORT_METHOD(replaceLocalUserAttributes:
-    (NSDictionary *) params
-            resolve:
-            (RCTPromiseResolveBlock) resolve
-            reject:
-            (RCTPromiseRejectBlock) reject) {
-    NSMutableArray<AgoraRtmAttribute *> *attributes = [[NSMutableArray<AgoraRtmAttribute *> alloc] init];
-    for (NSDictionary *attribute in params[@"attributes"]) {
-        AgoraRtmAttribute *rtmAttribute = [[AgoraRtmAttribute alloc] init];
-        rtmAttribute.key = attribute[@"key"];
-        rtmAttribute.value = attribute[@"value"];
-        [attributes addObject:rtmAttribute];
+- (AgoraRtmLocalInvitation *)getLocalInvitation:(NSDictionary *)params {
+  AgoraRtmLocalInvitation *ret = nil;
+  NSDictionary *localInvitation = params[@"localInvitation"];
+  NSNumber *hash = localInvitation[@"hash"];
+  if (hash.intValue == 0) {
+    for (NSNumber *key in self.localInvitations) {
+      if ([self.localInvitations[key].calleeId
+              isEqualToString:localInvitation[@"calleeId"]]) {
+        ret = self.localInvitations[key];
+        break;
+      }
     }
-
-    [self.rtmKit addOrUpdateLocalUserAttributes:attributes completion:^(AgoraRtmProcessAttributeErrorCode errorCode) {
-        if (errorCode == AgoraRtmAttributeOperationErrorOk) {
-            resolve(nil);
-        } else {
-            reject(@(errorCode).stringValue, @"", nil);
-        }
-    }];
+  } else {
+    ret = self.localInvitations[hash];
+  }
+  NSString *content = localInvitation[@"content"];
+  if (content) {
+    ret.content = content;
+  }
+  NSString *channelId = localInvitation[@"channelId"];
+  if (channelId) {
+    ret.channelId = channelId;
+  }
+  return ret;
 }
 
-// remove local user attributes by keys
-RCT_EXPORT_METHOD(removeLocalUserAttributesByKeys:
-    (NSDictionary *) params
-            resolve:
-            (RCTPromiseResolveBlock) resolve
-            reject:
-            (RCTPromiseRejectBlock) reject) {
-    NSArray<NSString *> *keys = params[@"keys"];
-
-    [self.rtmKit deleteLocalUserAttributesByKeys:keys completion:^(AgoraRtmProcessAttributeErrorCode errorCode) {
-        if (errorCode == AgoraRtmAttributeOperationErrorOk) {
-            resolve(nil);
-        } else {
-            reject(@(errorCode).stringValue, @"", nil);
-        }
-    }];
-}
-
-// remove all local user attributes
-RCT_EXPORT_METHOD(removeAllLocalUserAttributes:
-    (RCTPromiseResolveBlock) resolve
-            reject:
-            (RCTPromiseRejectBlock) reject) {
-    [self.rtmKit clearLocalUserAttributesWithCompletion:^(AgoraRtmProcessAttributeErrorCode errorCode) {
-        if (errorCode == AgoraRtmAttributeOperationErrorOk) {
-            resolve(nil);
-        } else {
-            reject(@(errorCode).stringValue, @"", nil);
-        }
-    }];
-}
-
-// get local user attributes by uid
-RCT_EXPORT_METHOD(getUserAttributesByUid:
-    (NSString *) uid
-            resolve:
-            (RCTPromiseResolveBlock) resolve
-            reject:
-            (RCTPromiseRejectBlock) reject) {
-    [self.rtmKit getUserAllAttributes:uid completion:^(NSArray<AgoraRtmAttribute *> *_Nullable attributes, NSString *userId, AgoraRtmProcessAttributeErrorCode errorCode) {
-        if (errorCode == AgoraRtmAttributeOperationErrorOk) {
-            NSMutableDictionary<NSString *, NSString *> *exportAttributes = [NSMutableDictionary dictionary];
-            for (AgoraRtmAttribute *attribute in attributes) {
-                exportAttributes[attribute.key] = attribute.value;
-            }
-            resolve(@{
-                    @"uid": uid,
-                    @"attributes": exportAttributes
-            });
-        } else {
-            reject(@(errorCode).stringValue, @"", nil);
-        }
-    }];
-}
-
-// send local invitation
-RCT_EXPORT_METHOD(sendLocalInvitation:
-    (NSDictionary *) params
-            resolve:
-            (RCTPromiseResolveBlock) resolve
-            reject:
-            (RCTPromiseRejectBlock) reject) {
-    NSString *calleeId = params[@"uid"];
-    NSString *content = params[@"content"];
-    NSString *channelId = params[@"channelId"];
-
-    AgoraRtmLocalInvitation *localInvitation = [[AgoraRtmLocalInvitation new] initWithCalleeId:calleeId];
-    localInvitation.content = content;
-    localInvitation.channelId = channelId;
-
-    __weak typeof(self) weakSelf = self;
-    [self.rtmCallKit sendLocalInvitation:localInvitation completion:^(AgoraRtmInvitationApiCallErrorCode errorCode) {
-        if (errorCode == AgoraRtmInvitationApiCallErrorOk) {
-            weakSelf.localInvitations[calleeId] = localInvitation;
-            resolve(nil);
-        } else {
-            reject(@(errorCode).stringValue, @"", nil);
-        }
-    }];
-}
-
-// cancel local invitation
-RCT_EXPORT_METHOD(cancelLocalInvitation:
-    (NSDictionary *) params
-            resolve:
-            (RCTPromiseResolveBlock) resolve
-            reject:
-            (RCTPromiseRejectBlock) reject) {
-    NSString *calleeId = params[@"uid"];
-
-    AgoraRtmLocalInvitation *localInvitation = self.localInvitations[calleeId];
-    if (localInvitation == nil) {
-        reject(@"-1", @"local_invitation_not_found", nil);
-    } else {
-        __weak typeof(self) weakSelf = self;
-        [self.rtmCallKit cancelLocalInvitation:localInvitation completion:^(AgoraRtmInvitationApiCallErrorCode errorCode) {
-            if (errorCode == AgoraRtmInvitationApiCallErrorOk) {
-                [weakSelf.localInvitations removeObjectForKey:calleeId];
-                resolve(nil);
-            } else {
-                reject(@(errorCode).stringValue, @"", nil);
-            }
-        }];
+- (AgoraRtmRemoteInvitation *)getRemoteInvitation:(NSDictionary *)params {
+  AgoraRtmRemoteInvitation *ret = nil;
+  NSDictionary *remoteInvitation = params[@"remoteInvitation"];
+  NSNumber *hash = remoteInvitation[@"hash"];
+  if (hash == nil) {
+    for (NSNumber *key in self.remoteInvitations) {
+      if ([self.remoteInvitations[key].callerId
+              isEqualToString:remoteInvitation[@"callerId"]]) {
+        ret = self.remoteInvitations[key];
+        break;
+      }
     }
+  } else {
+    ret = self.remoteInvitations[hash];
+  }
+  NSString *response = remoteInvitation[@"response"];
+  if (response) {
+    ret.response = response;
+  }
+  return ret;
 }
 
-// accept remote invitation
-RCT_EXPORT_METHOD(acceptRemoteInvitation:
-    (NSDictionary *) params
-            resolve:
-            (RCTPromiseResolveBlock) resolve
-            reject:
-            (RCTPromiseRejectBlock) reject) {
-    NSString *calleeId = params[@"uid"];
-    NSString *response = params[@"response"];
-
-    AgoraRtmRemoteInvitation *remoteInvitation = self.remoteInvitations[calleeId];
-    if (remoteInvitation == nil) {
-        reject(@"-1", @"remote_invitation_not_found", nil);
-    } else {
-        remoteInvitation.response = response;
-
-        __weak typeof(self) weakSelf = self;
-        [self.rtmCallKit acceptRemoteInvitation:remoteInvitation completion:^(AgoraRtmInvitationApiCallErrorCode errorCode) {
-            if (errorCode == AgoraRtmInvitationApiCallErrorOk) {
-                [weakSelf.remoteInvitations removeObjectForKey:calleeId];
-                resolve(nil);
-            } else {
-                reject(@(errorCode).stringValue, @"", nil);
-            }
-        }];
-    }
+RCT_EXPORT_METHOD(createLocalInvitation
+                  : (NSDictionary *)params resolve
+                  : (RCTPromiseResolveBlock)resolve reject
+                  : (RCTPromiseRejectBlock)reject) {
+  AgoraRtmLocalInvitation *localInvitation =
+      [Extensions mapToLocalInvitation:params];
+  self.localInvitations[@(localInvitation.hash)] = localInvitation;
+  resolve([Extensions localInvitationToMap:localInvitation]);
 }
 
-// refuse remote invitation
-RCT_EXPORT_METHOD(refuseRemoteInvitation:
-    (NSDictionary *) params
-            resolve:
-            (RCTPromiseResolveBlock) resolve
-            reject:
-            (RCTPromiseRejectBlock) reject) {
-    NSString *calleeId = params[@"uid"];
-    NSString *response = params[@"response"];
+RCT_EXPORT_METHOD(sendLocalInvitation
+                  : (NSDictionary *)params resolve
+                  : (RCTPromiseResolveBlock)resolve reject
+                  : (RCTPromiseRejectBlock)reject) {
+  [self.rtmKit.rtmCallKit
+      sendLocalInvitation:[self getLocalInvitation:params]
+               completion:^(AgoraRtmInvitationApiCallErrorCode errorCode) {
+                 if (errorCode == AgoraRtmInvitationApiCallErrorOk) {
+                   resolve(nil);
+                 } else {
+                   reject(@(errorCode).stringValue, @"", nil);
+                 }
+               }];
+}
 
-    AgoraRtmRemoteInvitation *remoteInvitation = self.remoteInvitations[calleeId];
-    if (remoteInvitation == nil) {
-        reject(@"-1", @"remote_invitation_not_found", nil);
-    } else {
-        remoteInvitation.response = response;
+RCT_EXPORT_METHOD(cancelLocalInvitation
+                  : (NSDictionary *)params resolve
+                  : (RCTPromiseResolveBlock)resolve reject
+                  : (RCTPromiseRejectBlock)reject) {
+  [self.rtmKit.rtmCallKit
+      cancelLocalInvitation:[self getLocalInvitation:params]
+                 completion:^(AgoraRtmInvitationApiCallErrorCode errorCode) {
+                   if (errorCode == AgoraRtmInvitationApiCallErrorOk) {
+                     resolve(nil);
+                   } else {
+                     reject(@(errorCode).stringValue, @"", nil);
+                   }
+                 }];
+}
 
-        __weak typeof(self) weakSelf = self;
-        [self.rtmCallKit refuseRemoteInvitation:remoteInvitation completion:^(AgoraRtmInvitationApiCallErrorCode errorCode) {
-            if (errorCode == AgoraRtmInvitationApiCallErrorOk) {
-                [weakSelf.remoteInvitations removeObjectForKey:calleeId];
-                resolve(nil);
-            } else {
-                reject(@(errorCode).stringValue, @"", nil);
-            }
-        }];
-    }
+RCT_EXPORT_METHOD(acceptRemoteInvitation
+                  : (NSDictionary *)params resolve
+                  : (RCTPromiseResolveBlock)resolve reject
+                  : (RCTPromiseRejectBlock)reject) {
+  [self.rtmKit.rtmCallKit
+      acceptRemoteInvitation:[self getRemoteInvitation:params]
+                  completion:^(AgoraRtmInvitationApiCallErrorCode errorCode) {
+                    if (errorCode == AgoraRtmInvitationApiCallErrorOk) {
+                      resolve(nil);
+                    } else {
+                      reject(@(errorCode).stringValue, @"", nil);
+                    }
+                  }];
+}
+
+RCT_EXPORT_METHOD(refuseRemoteInvitation
+                  : (NSDictionary *)params resolve
+                  : (RCTPromiseResolveBlock)resolve reject
+                  : (RCTPromiseRejectBlock)reject) {
+  [self.rtmKit.rtmCallKit
+      refuseRemoteInvitation:[self getRemoteInvitation:params]
+                  completion:^(AgoraRtmInvitationApiCallErrorCode errorCode) {
+                    if (errorCode == AgoraRtmInvitationApiCallErrorOk) {
+                      resolve(nil);
+                    } else {
+                      reject(@(errorCode).stringValue, @"", nil);
+                    }
+                  }];
 }
 
 #pragma mark - AgoraRtmDelegate
 
-- (void)rtmKit:(AgoraRtmKit *_Nonnull)kit connectionStateChanged:(AgoraRtmConnectionState)state reason:(AgoraRtmConnectionChangeReason)reason {
-    [self sendEvent:AG_CONNECTIONSTATECHANGED params:@{
-            @"state": @(state),
-            @"reason": @(reason)
-    }];
+- (void)rtmKit:(AgoraRtmKit *_Nonnull)kit
+    connectionStateChanged:(AgoraRtmConnectionState)state
+                    reason:(AgoraRtmConnectionChangeReason)reason {
+  [self sendEvent:ConnectionStateChanged params:@[ @(state), @(reason) ]];
 }
 
-- (void)rtmKit:(AgoraRtmKit *_Nonnull)kit messageReceived:(AgoraRtmMessage *_Nonnull)message fromPeer:(NSString *_Nonnull)peerId {
-    [self sendEvent:AG_MESSAGERECEIVED params:@{
-            @"text": message.text,
-            @"ts": @(message.serverReceivedTs),
-            @"offline": @(message.isOfflineMessage),
-            @"peerId": peerId
-    }];
+- (void)rtmKit:(AgoraRtmKit *_Nonnull)kit
+    messageReceived:(AgoraRtmMessage *_Nonnull)message
+           fromPeer:(NSString *_Nonnull)peerId {
+  [self sendEvent:MessageReceived
+           params:@[ [Extensions rtmMessageToMap:message], peerId ]];
 }
 
 - (void)rtmKitTokenDidExpire:(AgoraRtmKit *_Nonnull)kit {
-    [self sendEvent:AG_TOKEN_EXPIRED params:nil];
+  [self sendEvent:TokenExpired params:nil];
 }
 
-- (void)rtmKit:(AgoraRtmKit *)kit PeersOnlineStatusChanged:(NSArray<AgoraRtmPeerOnlineStatus *> *)onlineStatus {
-
+- (void)rtmKit:(AgoraRtmKit *)kit
+    PeersOnlineStatusChanged:
+        (NSArray<AgoraRtmPeerOnlineStatus *> *)onlineStatus {
+  NSMutableDictionary *ret = [NSMutableDictionary new];
+  for (AgoraRtmPeerOnlineStatus *item in onlineStatus) {
+    ret[item.peerId] = @(item.state);
+  }
+  [self sendEvent:PeersOnlineStatusChanged params:@[ ret ]];
 }
 
 #pragma mark - AgoraRtmChannelDelegate
 
-- (void)channel:(AgoraRtmChannel *_Nonnull)channel memberJoined:(AgoraRtmMember *_Nonnull)member {
-    [self sendEvent:AG_CHANNELMEMBERJOINED params:@{
-            @"channelId": member.channelId,
-            @"uid": member.userId
-    }];
+- (void)channel:(AgoraRtmChannel *_Nonnull)channel
+    memberJoined:(AgoraRtmMember *_Nonnull)member {
+  [self sendEvent:ChannelMemberJoined
+           params:@[ [Extensions rtmMemberToMap:member] ]];
 }
 
-- (void)channel:(AgoraRtmChannel *_Nonnull)channel memberLeft:(AgoraRtmMember *_Nonnull)member {
-    [self sendEvent:AG_CHANNELMEMBERLEFT params:@{
-            @"channelId": member.channelId,
-            @"uid": member.userId
-    }];
+- (void)channel:(AgoraRtmChannel *_Nonnull)channel
+     memberLeft:(AgoraRtmMember *_Nonnull)member {
+  [self sendEvent:ChannelMemberLeft
+           params:@[ [Extensions rtmMemberToMap:member] ]];
 }
 
-- (void)channel:(AgoraRtmChannel *_Nonnull)channel messageReceived:(AgoraRtmMessage *_Nonnull)message fromMember:(AgoraRtmMember *_Nonnull)member {
-    [self sendEvent:AG_CHANNELMESSAGERECEVIED params:@{
-            @"channelId": member.channelId,
-            @"uid": member.userId,
-            @"text": message.text,
-            @"ts": @(message.serverReceivedTs),
-            @"offline": @(message.isOfflineMessage)
-    }];
+- (void)channel:(AgoraRtmChannel *_Nonnull)channel
+    messageReceived:(AgoraRtmMessage *_Nonnull)message
+         fromMember:(AgoraRtmMember *_Nonnull)member {
+  [self sendEvent:ChannelMessageReceived
+           params:@[
+             [Extensions rtmMessageToMap:message],
+             [Extensions rtmMemberToMap:member]
+           ]];
 }
 
-- (void)channel:(AgoraRtmChannel *)channel attributeUpdate:(NSArray<AgoraRtmChannelAttribute *> *)attributes {
-
+- (void)channel:(AgoraRtmChannel *)channel
+    attributeUpdate:(NSArray<AgoraRtmChannelAttribute *> *)attributes {
+  NSMutableArray *ret = [NSMutableArray new];
+  for (AgoraRtmChannelAttribute *item in attributes) {
+    [ret addObject:[Extensions rtmChannelAttributeToMap:item]];
+  }
+  [self sendEvent:ChannelAttributesUpdated params:@[ ret ]];
 }
 
 - (void)channel:(AgoraRtmChannel *)channel memberCount:(int)count {
-
+  [self sendEvent:MemberCountUpdated params:@[ @(count) ]];
 }
 
 #pragma mark - AgoraRtmCallDelegate
 
-- (void)rtmCallKit:(AgoraRtmCallKit *_Nonnull)callKit localInvitationReceivedByPeer:(AgoraRtmLocalInvitation *_Nonnull)localInvitation {
-    [self sendEvent:AG_LOCALINVITATIONRECEIVEDBYPEER params:@{
-            @"calleeId": localInvitation.calleeId,
-            @"content": localInvitation.content ? localInvitation.content : [NSNull null],
-            @"state": @(localInvitation.state),
-            @"channelId": localInvitation.channelId ? localInvitation.channelId : [NSNull null],
-            @"response": localInvitation.response ? localInvitation.response : [NSNull null]
-    }];
+- (void)rtmCallKit:(AgoraRtmCallKit *_Nonnull)callKit
+    localInvitationReceivedByPeer:
+        (AgoraRtmLocalInvitation *_Nonnull)localInvitation {
+  [self sendEvent:LocalInvitationReceivedByPeer
+           params:@[ [Extensions localInvitationToMap:localInvitation] ]];
 }
 
-- (void)rtmCallKit:(AgoraRtmCallKit *_Nonnull)callKit localInvitationAccepted:(AgoraRtmLocalInvitation *_Nonnull)localInvitation withResponse:(NSString *_Nullable)response {
-    [self sendEvent:AG_LOCALINVITATIONACCEPTED params:@{
-            @"calleeId": localInvitation.calleeId,
-            @"content": localInvitation.content ? localInvitation.content : [NSNull null],
-            @"state": @(localInvitation.state),
-            @"channelId": localInvitation.channelId ? localInvitation.channelId : [NSNull null],
-            @"response": localInvitation.response ? localInvitation.response : [NSNull null]
-    }];
+- (void)rtmCallKit:(AgoraRtmCallKit *_Nonnull)callKit
+    localInvitationAccepted:(AgoraRtmLocalInvitation *_Nonnull)localInvitation
+               withResponse:(NSString *_Nullable)response {
+  [self.localInvitations removeObjectForKey:@(localInvitation.hash)];
+  [self sendEvent:LocalInvitationAccepted
+           params:@[
+             [Extensions localInvitationToMap:localInvitation], response
+           ]];
 }
 
-- (void)rtmCallKit:(AgoraRtmCallKit *_Nonnull)callKit localInvitationRefused:(AgoraRtmLocalInvitation *_Nonnull)localInvitation withResponse:(NSString *_Nullable)response {
-    [self sendEvent:AG_LOCALINVITATIONREFUSED params:@{
-            @"calleeId": localInvitation.calleeId,
-            @"content": localInvitation.content ? localInvitation.content : [NSNull null],
-            @"state": @(localInvitation.state),
-            @"channelId": localInvitation.channelId ? localInvitation.channelId : [NSNull null],
-            @"response": localInvitation.response ? localInvitation.response : [NSNull null]
-    }];
+- (void)rtmCallKit:(AgoraRtmCallKit *_Nonnull)callKit
+    localInvitationRefused:(AgoraRtmLocalInvitation *_Nonnull)localInvitation
+              withResponse:(NSString *_Nullable)response {
+  [self.localInvitations removeObjectForKey:@(localInvitation.hash)];
+  [self sendEvent:LocalInvitationRefused
+           params:@[
+             [Extensions localInvitationToMap:localInvitation], response
+           ]];
 }
 
-- (void)rtmCallKit:(AgoraRtmCallKit *_Nonnull)callKit localInvitationCanceled:(AgoraRtmLocalInvitation *_Nonnull)localInvitation {
-    [self sendEvent:AG_LOCALINVITATIONCANCELED params:@{
-            @"calleeId": localInvitation.calleeId,
-            @"content": localInvitation.content ? localInvitation.content : [NSNull null],
-            @"state": @(localInvitation.state),
-            @"channelId": localInvitation.channelId ? localInvitation.channelId : [NSNull null],
-            @"response": localInvitation.response ? localInvitation.response : [NSNull null]
-    }];
+- (void)rtmCallKit:(AgoraRtmCallKit *_Nonnull)callKit
+    localInvitationCanceled:(AgoraRtmLocalInvitation *_Nonnull)localInvitation {
+  [self.localInvitations removeObjectForKey:@(localInvitation.hash)];
+  [self sendEvent:LocalInvitationCanceled
+           params:@[ [Extensions localInvitationToMap:localInvitation] ]];
 }
 
-- (void)rtmCallKit:(AgoraRtmCallKit *_Nonnull)callKit localInvitationFailure:(AgoraRtmLocalInvitation *_Nonnull)localInvitation errorCode:(AgoraRtmLocalInvitationErrorCode)errorCode {
-    [self sendEvent:AG_LOCALINVITATIONFAILURE params:@{
-            @"calleeId": localInvitation.calleeId,
-            @"content": localInvitation.content ? localInvitation.content : [NSNull null],
-            @"state": @(localInvitation.state),
-            @"channelId": localInvitation.channelId ? localInvitation.channelId : [NSNull null],
-            @"response": localInvitation.response ? localInvitation.response : [NSNull null],
-            @"code": @(errorCode)
-    }];
+- (void)rtmCallKit:(AgoraRtmCallKit *_Nonnull)callKit
+    localInvitationFailure:(AgoraRtmLocalInvitation *_Nonnull)localInvitation
+                 errorCode:(AgoraRtmLocalInvitationErrorCode)errorCode {
+  [self.localInvitations removeObjectForKey:@(localInvitation.hash)];
+  [self sendEvent:LocalInvitationFailure
+           params:@[
+             [Extensions localInvitationToMap:localInvitation], @(errorCode)
+           ]];
 }
 
-- (void)rtmCallKit:(AgoraRtmCallKit *_Nonnull)callKit remoteInvitationReceived:(AgoraRtmRemoteInvitation *_Nonnull)remoteInvitation {
-    self.remoteInvitations[remoteInvitation.callerId] = remoteInvitation;
-
-    [self sendEvent:AG_REMOTEINVITATIONRECEIVED params:@{
-            @"callerId": remoteInvitation.callerId,
-            @"content": remoteInvitation.content ? remoteInvitation.content : [NSNull null],
-            @"state": @(remoteInvitation.state),
-            @"channelId": remoteInvitation.channelId ? remoteInvitation.channelId : [NSNull null],
-            @"response": remoteInvitation.response ? remoteInvitation.response : [NSNull null]
-    }];
+- (void)rtmCallKit:(AgoraRtmCallKit *_Nonnull)callKit
+    remoteInvitationReceived:
+        (AgoraRtmRemoteInvitation *_Nonnull)remoteInvitation {
+  self.remoteInvitations[remoteInvitation.callerId] = remoteInvitation;
+  [self sendEvent:RemoteInvitationReceived
+           params:@[ [Extensions remoteInvitationToMap:remoteInvitation] ]];
 }
 
-- (void)rtmCallKit:(AgoraRtmCallKit *_Nonnull)callKit remoteInvitationRefused:(AgoraRtmRemoteInvitation *_Nonnull)remoteInvitation {
-    [self sendEvent:AG_REMOTEINVITATIONREFUSED params:@{
-            @"callerId": remoteInvitation.callerId,
-            @"content": remoteInvitation.content ? remoteInvitation.content : [NSNull null],
-            @"state": @(remoteInvitation.state),
-            @"channelId": remoteInvitation.channelId ? remoteInvitation.channelId : [NSNull null],
-            @"response": remoteInvitation.response ? remoteInvitation.response : [NSNull null]
-    }];
+- (void)rtmCallKit:(AgoraRtmCallKit *_Nonnull)callKit
+    remoteInvitationRefused:
+        (AgoraRtmRemoteInvitation *_Nonnull)remoteInvitation {
+  [self.remoteInvitations removeObjectForKey:@(remoteInvitation.hash)];
+  [self sendEvent:RemoteInvitationRefused
+           params:@[ [Extensions remoteInvitationToMap:remoteInvitation] ]];
 }
 
-- (void)rtmCallKit:(AgoraRtmCallKit *_Nonnull)callKit remoteInvitationAccepted:(AgoraRtmRemoteInvitation *_Nonnull)remoteInvitation {
-    [self sendEvent:AG_REMOTEINVITATIONACCEPTED params:@{
-            @"callerId": remoteInvitation.callerId,
-            @"content": remoteInvitation.content ? remoteInvitation.content : [NSNull null],
-            @"state": @(remoteInvitation.state),
-            @"channelId": remoteInvitation.channelId ? remoteInvitation.channelId : [NSNull null],
-            @"response": remoteInvitation.response ? remoteInvitation.response : [NSNull null]
-    }];
+- (void)rtmCallKit:(AgoraRtmCallKit *_Nonnull)callKit
+    remoteInvitationAccepted:
+        (AgoraRtmRemoteInvitation *_Nonnull)remoteInvitation {
+  [self.remoteInvitations removeObjectForKey:@(remoteInvitation.hash)];
+  [self sendEvent:RemoteInvitationAccepted
+           params:@[ [Extensions remoteInvitationToMap:remoteInvitation] ]];
 }
 
-- (void)rtmCallKit:(AgoraRtmCallKit *_Nonnull)callKit remoteInvitationCanceled:(AgoraRtmRemoteInvitation *_Nonnull)remoteInvitation {
-    [self sendEvent:AG_REMOTEINVITATIONCANCELED params:@{
-            @"callerId": remoteInvitation.callerId,
-            @"content": remoteInvitation.content ? remoteInvitation.content : [NSNull null],
-            @"state": @(remoteInvitation.state),
-            @"channelId": remoteInvitation.channelId ? remoteInvitation.channelId : [NSNull null],
-            @"response": remoteInvitation.response ? remoteInvitation.response : [NSNull null]
-    }];
+- (void)rtmCallKit:(AgoraRtmCallKit *_Nonnull)callKit
+    remoteInvitationCanceled:
+        (AgoraRtmRemoteInvitation *_Nonnull)remoteInvitation {
+  [self.remoteInvitations removeObjectForKey:@(remoteInvitation.hash)];
+  [self sendEvent:RemoteInvitationCanceled
+           params:@[ [Extensions remoteInvitationToMap:remoteInvitation] ]];
 }
 
-- (void)rtmCallKit:(AgoraRtmCallKit *_Nonnull)callKit remoteInvitationFailure:(AgoraRtmRemoteInvitation *_Nonnull)remoteInvitation errorCode:(AgoraRtmRemoteInvitationErrorCode)errorCode {
-    [self sendEvent:AG_REMOTEINVITATIONFAILURE params:@{
-            @"callerId": remoteInvitation.callerId,
-            @"content": remoteInvitation.content ? remoteInvitation.content : [NSNull null],
-            @"state": @(remoteInvitation.state),
-            @"channelId": remoteInvitation.channelId ? remoteInvitation.channelId : [NSNull null],
-            @"response": remoteInvitation.response ? remoteInvitation.response : [NSNull null],
-            @"code": @(errorCode)
-    }];
+- (void)rtmCallKit:(AgoraRtmCallKit *_Nonnull)callKit
+    remoteInvitationFailure:(AgoraRtmRemoteInvitation *_Nonnull)remoteInvitation
+                  errorCode:(AgoraRtmRemoteInvitationErrorCode)errorCode {
+  [self.remoteInvitations removeObjectForKey:@(remoteInvitation.hash)];
+  [self sendEvent:RemoteInvitationFailure
+           params:@[
+             [Extensions remoteInvitationToMap:remoteInvitation], @(errorCode)
+           ]];
 }
 
 @end

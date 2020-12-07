@@ -24,7 +24,7 @@ Either way, then link with:
  `react-native link agora-react-native-rtm`
 
 ## Documentation
-  * [examples](./examples)
+  * [examples](example)
   * [api docs](https://agoraio.github.io/agora-react-native-rtm/latest/)
   * [Agora RTM 中文文档](https://docs.agora.io/cn/Real-time-Messaging/product_rtm?platform=All%20Platforms)
   * [Agora RTM English](https://docs.agora.io/en/Real-time-Messaging/product_rtm?platform=All%20Platforms)

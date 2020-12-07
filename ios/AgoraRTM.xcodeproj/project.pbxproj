@@ -11,6 +11,7 @@
 		08F723EF22C393F700CA9C7C /* AgoraRTM.h in Sources */ = {isa = PBXBuildFile; fileRef = 084F8C8B229C2D3300481837 /* AgoraRTM.h */; };
 		08F723F022C393F700CA9C7C /* AgoraRTM.m in Sources */ = {isa = PBXBuildFile; fileRef = 084F8C8C229C2D4100481837 /* AgoraRTM.m */; };
 		08F723F122C393F700CA9C7C /* AgoraConst.h in Sources */ = {isa = PBXBuildFile; fileRef = 08F7231422C228C300CA9C7C /* AgoraConst.h */; };
+		F5A64DF2257D2FEA007C6724 /* Extensions.m in Sources */ = {isa = PBXBuildFile; fileRef = F5A64DF1257D2FEA007C6724 /* Extensions.m */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXCopyFilesBuildPhase section */
@@ -31,6 +32,8 @@
 		08F7231422C228C300CA9C7C /* AgoraConst.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = AgoraConst.h; sourceTree = "<group>"; };
 		08F723E422C3933900CA9C7C /* libAgoraRTM.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = libAgoraRTM.a; sourceTree = BUILT_PRODUCTS_DIR; };
 		08F723ED22C393CE00CA9C7C /* AgoraRtmKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AgoraRtmKit.framework; path = ../../../Project/AgoraRNQuickStart/ios/Pods/AgoraRtm_iOS/AgoraRtmKit.framework; sourceTree = "<group>"; };
+		F5A64DF0257D2FEA007C6724 /* Extensions.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Extensions.h; sourceTree = "<group>"; };
+		F5A64DF1257D2FEA007C6724 /* Extensions.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = Extensions.m; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -51,6 +54,8 @@
 				084F8C8B229C2D3300481837 /* AgoraRTM.h */,
 				084F8C8C229C2D4100481837 /* AgoraRTM.m */,
 				08F7231422C228C300CA9C7C /* AgoraConst.h */,
+				F5A64DF0257D2FEA007C6724 /* Extensions.h */,
+				F5A64DF1257D2FEA007C6724 /* Extensions.m */,
 			);
 			path = src;
 			sourceTree = "<group>";
@@ -140,6 +145,7 @@
 				08F723EF22C393F700CA9C7C /* AgoraRTM.h in Sources */,
 				08F723F022C393F700CA9C7C /* AgoraRTM.m in Sources */,
 				08F723F122C393F700CA9C7C /* AgoraConst.h in Sources */,
+				F5A64DF2257D2FEA007C6724 /* Extensions.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

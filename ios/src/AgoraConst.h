@@ -8,21 +8,24 @@
 #ifndef AgoraConst_h
 #define AgoraConst_h
 
-static NSString *AG_ERROR = @"ag_rtm_error";
-static NSString *AG_CONNECTIONSTATECHANGED = @"ag_rtm_connectionStateChanged";
-static NSString *AG_MESSAGERECEIVED = @"ag_rtm_messageReceived";
-static NSString *AG_LOCALINVITATIONRECEIVEDBYPEER = @"ag_rtm_localInvitationReceivedByPeer";
-static NSString *AG_LOCALINVITATIONACCEPTED = @"ag_rtm_localInvitationAccepted";
-static NSString *AG_LOCALINVITATIONREFUSED = @"ag_rtm_localInvitationRefused";
-static NSString *AG_LOCALINVITATIONCANCELED = @"ag_rtm_localInvitationCanceled";
-static NSString *AG_LOCALINVITATIONFAILURE = @"ag_rtm_localInvitationFailure";
-static NSString *AG_REMOTEINVITATIONFAILURE = @"ag_rtm_remoteInvitationFailure";
-static NSString *AG_REMOTEINVITATIONRECEIVED = @"ag_rtm_remoteInvitationReceived";
-static NSString *AG_REMOTEINVITATIONACCEPTED = @"ag_rtm_remoteInvitationAccepted";
-static NSString *AG_REMOTEINVITATIONREFUSED = @"ag_rtm_remoteInvitationRefused";
-static NSString *AG_REMOTEINVITATIONCANCELED = @"ag_rtm_remoteInvitationCanceled";
-static NSString *AG_CHANNELMESSAGERECEVIED = @"ag_rtm_channelMessageReceived";
-static NSString *AG_CHANNELMEMBERJOINED = @"ag_rtm_channelMemberJoined";
-static NSString *AG_CHANNELMEMBERLEFT = @"ag_rtm_channelMemberLeft";
-static NSString *AG_TOKEN_EXPIRED = @"ag_rtm_tokenExpired";
+static NSString *ConnectionStateChanged = @"io.agora.rtm.ConnectionStateChanged";
+static NSString *MessageReceived = @"io.agora.rtm.MessageReceived";
+static NSString *LocalInvitationReceivedByPeer = @"io.agora.rtm.LocalInvitationReceivedByPeer";
+static NSString *LocalInvitationAccepted = @"io.agora.rtm.LocalInvitationAccepted";
+static NSString *LocalInvitationRefused = @"io.agora.rtm.LocalInvitationRefused";
+static NSString *LocalInvitationCanceled = @"io.agora.rtm.LocalInvitationCanceled";
+static NSString *LocalInvitationFailure = @"io.agora.rtm.LocalInvitationFailure";
+static NSString *RemoteInvitationFailure = @"io.agora.rtm.RemoteInvitationFailure";
+static NSString *RemoteInvitationReceived = @"io.agora.rtm.RemoteInvitationReceived";
+static NSString *RemoteInvitationAccepted = @"io.agora.rtm.RemoteInvitationAccepted";
+static NSString *RemoteInvitationRefused = @"io.agora.rtm.RemoteInvitationRefused";
+static NSString *RemoteInvitationCanceled = @"io.agora.rtm.RemoteInvitationCanceled";
+static NSString *ChannelMessageReceived = @"io.agora.rtm.ChannelMessageReceived";
+static NSString *ChannelMemberJoined = @"io.agora.rtm.ChannelMemberJoined";
+static NSString *ChannelMemberLeft = @"io.agora.rtm.ChannelMemberLeft";
+static NSString *TokenExpired = @"io.agora.rtm.TokenExpired";
+static NSString *PeersOnlineStatusChanged = @"io.agora.rtm.PeersOnlineStatusChanged";
+static NSString *ChannelAttributesUpdated = @"io.agora.rtm.ChannelAttributesUpdated";
+static NSString *MemberCountUpdated = @"io.agora.rtm.MemberCountUpdated";
+
 #endif /* AgoraConst_h */

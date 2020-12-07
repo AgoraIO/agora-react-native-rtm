@@ -1,21 +1,23 @@
 package io.agora.agora_rtm;
 
 public final class AgoraRTMConstants {
-    public static final String AG_ERROR = "ag_rtm_error";
-    public static final String AG_CONNECTIONSTATECHANGED = "ag_rtm_connectionStateChanged";
-    public static final String AG_MESSAGERECEIVED = "ag_rtm_messageReceived";
-    public static final String AG_LOCALINVITATIONRECEIVEDBYPEER = "ag_rtm_localInvitationReceivedByPeer";
-    public static final String AG_LOCALINVITATIONACCEPTED = "ag_rtm_localInvitationAccepted";
-    public static final String AG_LOCALINVITATIONREFUSED = "ag_rtm_localInvitationRefused";
-    public static final String AG_LOCALINVITATIONCANCELED = "ag_rtm_localInvitationCanceled";
-    public static final String AG_LOCALINVITATIONFAILURE = "ag_rtm_localInvitationFailure";
-    public static final String AG_REMOTEINVITATIONFAILURE = "ag_rtm_remoteInvitationFailure";
-    public static final String AG_REMOTEINVITATIONRECEIVED = "ag_rtm_remoteInvitationReceived";
-    public static final String AG_REMOTEINVITATIONACCEPTED = "ag_rtm_remoteInvitationAccepted";
-    public static final String AG_REMOTEINVITATIONREFUSED = "ag_rtm_remoteInvitationRefused";
-    public static final String AG_REMOTEINVITATIONCANCELED = "ag_rtm_remoteInvitationCanceled";
-    public static final String AG_CHANNELMESSAGERECEVIED = "ag_rtm_channelMessageReceived";
-    public static final String AG_CHANNELMEMBERJOINED = "ag_rtm_channelMemberJoined";
-    public static final String AG_CHANNELMEMBERLEFT = "ag_rtm_channelMemberLeft";
-    public static final String AG_TOKEN_EXPIRED = "ag_rtm_tokenExpired";
+  public static final String ConnectionStateChanged = "ConnectionStateChanged";
+  public static final String MessageReceived = "MessageReceived";
+  public static final String LocalInvitationReceivedByPeer = "LocalInvitationReceivedByPeer";
+  public static final String LocalInvitationAccepted = "LocalInvitationAccepted";
+  public static final String LocalInvitationRefused = "LocalInvitationRefused";
+  public static final String LocalInvitationCanceled = "LocalInvitationCanceled";
+  public static final String LocalInvitationFailure = "LocalInvitationFailure";
+  public static final String RemoteInvitationFailure = "RemoteInvitationFailure";
+  public static final String RemoteInvitationReceived = "RemoteInvitationReceived";
+  public static final String RemoteInvitationAccepted = "RemoteInvitationAccepted";
+  public static final String RemoteInvitationRefused = "RemoteInvitationRefused";
+  public static final String RemoteInvitationCanceled = "RemoteInvitationCanceled";
+  public static final String ChannelMessageReceived = "ChannelMessageReceived";
+  public static final String ChannelMemberJoined = "ChannelMemberJoined";
+  public static final String ChannelMemberLeft = "ChannelMemberLeft";
+  public static final String TokenExpired = "TokenExpired";
+  public static final String PeersOnlineStatusChanged = "PeersOnlineStatusChanged";
+  public static final String ChannelAttributesUpdated = "ChannelAttributesUpdated";
+  public static final String MemberCountUpdated = "MemberCountUpdated";
 }
