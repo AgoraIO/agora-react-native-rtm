@@ -1,20 +1,22 @@
-require 'json'
+require "json"
 
-package = JSON.parse File.read File.join __dir__, "package.json"
+package = JSON.parse(File.read(File.join(__dir__, "package.json")))
+
 Pod::Spec.new do |s|
   s.name         = package["name"]
   s.version      = package["version"]
-  s.summary      = package["summary"]
-  s.description  = package["description"]
-
+  s.summary      = package["description"]
   s.homepage     = package["homepage"]
   s.license      = package["license"]
-  s.authors      = package["authors"]
-  s.platform     = :ios
-  s.source        = { :git => package["repository"]["url"], :tag => "#{s.version}" }
-  s.source_files = 'ios/src/**/*.{h,m}'
+  s.authors      = package["author"]
 
-  s.dependency 'AgoraRtm_iOS', '1.2.2'
-  s.dependency 'React'
-  s.ios.deployment_target = '8.0'
+  s.platforms    = { :ios => "9.0" }
+  s.source       = { :git => "https://github.com/AgoraIO/agora-react-native-rtm.git", :tag => "#{s.version}" }
+
+  s.source_files = "ios/**/*.{h,m,mm,swift}"
+
+  s.static_framework = true
+
+  s.dependency "React"
+  s.dependency 'AgoraRtm_iOS', "1.2.2"
 end

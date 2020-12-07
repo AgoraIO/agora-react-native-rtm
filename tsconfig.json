@@ -1,27 +1,27 @@
 {
   "compilerOptions": {
-    "declaration": true,
-    "declarationDir": "./lib",
-    "types": [
-      "react",
-      "react-native"
-    ],
-    "target": "es2015",
-    "jsx": "react",
-    "moduleResolution": "node",
-    "sourceMap": true,
-    "importHelpers": true,
-    "outDir": "./lib",
-    "module": "commonjs",
-    "strict": true,
-    "declaration": true,
-    "allowSyntheticDefaultImports": true,
+    "baseUrl": ".",
+    "paths": {
+      "agora-react-native-rtm": ["./src/index"]
+    },
+    "allowUnreachableCode": false,
+    "allowUnusedLabels": false,
     "esModuleInterop": true,
-    "lib": ["es2015"],
+    "importsNotUsedAsValues": "error",
+    "forceConsistentCasingInFileNames": true,
+    "jsx": "react",
+    "lib": ["esnext"],
+    "module": "esnext",
+    "moduleResolution": "node",
+    "noFallthroughCasesInSwitch": true,
+    "noImplicitReturns": true,
+    "noImplicitUseStrict": false,
+    "noStrictGenericChecks": false,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
     "resolveJsonModule": true,
-  },
-  "compileOnSave": true,
-  "include": [
-    "src"
-  ]
+    "skipLibCheck": true,
+    "strict": true,
+    "target": "esnext"
+  }
 }
