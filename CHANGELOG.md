@@ -1,3 +1,10 @@
+## [1.2.2-alpha.5](https://github.com/AgoraIO/agora-react-native-rtm/compare/v1.2.2-alpha.4...v1.2.2-alpha.5) (2021-01-05)
+
+
+### Bug Fixes
+
+* miss `agora-react-native-rtm.podspec` ([c31c393](https://github.com/AgoraIO/agora-react-native-rtm/commit/c31c393fc7eaee79d904027babd341e4c0e2cf31))
+
 ## [1.2.2-alpha.4](https://github.com/AgoraIO/agora-react-native-rtm/compare/1.2.2-alpha.3...v1.2.2-alpha.4) (2020-12-07)
 
 
