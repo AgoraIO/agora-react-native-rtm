@@ -634,7 +634,7 @@ RCT_EXPORT_METHOD(releaseChannel
   AgoraRtmRemoteInvitation *ret = nil;
   NSDictionary *remoteInvitation = params[@"remoteInvitation"];
   NSNumber *hash = remoteInvitation[@"hash"];
-  if (hash == nil) {
+  if (hash.intValue == 0) {
     for (NSNumber *key in self.remoteInvitations) {
       if ([self.remoteInvitations[key].callerId
               isEqualToString:remoteInvitation[@"callerId"]]) {
