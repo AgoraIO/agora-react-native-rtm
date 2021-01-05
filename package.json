@@ -13,7 +13,7 @@
     "android",
     "ios",
     "cpp",
-    "react-native-agora.podspec",
+    "agora-react-native-rtm.podspec",
     "!lib/typescript/example",
     "!**/__tests__",
     "!**/__fixtures__",
