@@ -1,3 +1,10 @@
+## [1.2.2-alpha.6](https://github.com/AgoraIO/agora-react-native-rtm/compare/v1.2.2-alpha.5...v1.2.2-alpha.6) (2021-01-05)
+
+
+### Bug Fixes
+
+* iOS process `RemoteInvitation` bug ([1bd5f9a](https://github.com/AgoraIO/agora-react-native-rtm/commit/1bd5f9a9a04c1b6fcf49e51509a087dd8e0b3fab))
+
 ## [1.2.2-alpha.5](https://github.com/AgoraIO/agora-react-native-rtm/compare/v1.2.2-alpha.4...v1.2.2-alpha.5) (2021-01-05)
 
 
