@@ -33,6 +33,9 @@ import io.agora.rtm.RtmChannelListener;
 import io.agora.rtm.RtmChannelMember;
 import io.agora.rtm.RtmClient;
 import io.agora.rtm.RtmClientListener;
+import io.agora.rtm.RtmFileMessage;
+import io.agora.rtm.RtmImageMessage;
+import io.agora.rtm.RtmMediaOperationProgress;
 import io.agora.rtm.RtmMessage;
 
 public class AgoraRTMModule extends ReactContextBaseJavaModule
@@ -476,6 +479,26 @@ public class AgoraRTMModule extends ReactContextBaseJavaModule
   }
 
   @Override
+  public void onImageMessageReceivedFromPeer(RtmImageMessage rtmImageMessage, String s) {
+
+  }
+
+  @Override
+  public void onFileMessageReceivedFromPeer(RtmFileMessage rtmFileMessage, String s) {
+
+  }
+
+  @Override
+  public void onMediaUploadingProgress(RtmMediaOperationProgress rtmMediaOperationProgress, long l) {
+
+  }
+
+  @Override
+  public void onMediaDownloadingProgress(RtmMediaOperationProgress rtmMediaOperationProgress, long l) {
+
+  }
+
+  @Override
   public void onTokenExpired() {
     sendEvent(AgoraRTMConstants.TokenExpired, null);
   }
@@ -511,6 +534,16 @@ public class AgoraRTMModule extends ReactContextBaseJavaModule
     ret.pushMap(Arguments.makeNativeMap(Extensions.toMap(rtmMessage)));
     ret.pushMap(Arguments.makeNativeMap(Extensions.toMap(rtmChannelMember)));
     sendEvent(AgoraRTMConstants.ChannelMessageReceived, ret);
+  }
+
+  @Override
+  public void onImageMessageReceived(RtmImageMessage rtmImageMessage, RtmChannelMember rtmChannelMember) {
+
+  }
+
+  @Override
+  public void onFileMessageReceived(RtmFileMessage rtmFileMessage, RtmChannelMember rtmChannelMember) {
+
   }
 
   @Override
