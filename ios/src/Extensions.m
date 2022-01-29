@@ -16,8 +16,8 @@
 + (AgoraRtmSendMessageOptions *)mapToSendMessageOptions:(NSDictionary *)map {
   AgoraRtmSendMessageOptions *options =
       [[AgoraRtmSendMessageOptions alloc] init];
-  options.enableOfflineMessaging = map[@"enableOfflineMessaging"];
-  options.enableHistoricalMessaging = map[@"enableHistoricalMessaging"];
+  options.enableOfflineMessaging = map[@"options"][@"enableOfflineMessaging"];
+  options.enableHistoricalMessaging = map[@"options"][@"enableHistoricalMessaging"];
   return options;
 }
 
