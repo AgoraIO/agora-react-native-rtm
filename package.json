@@ -1,6 +1,6 @@
 {
   "name": "agora-react-native-rtm",
-  "version": "1.4.8",
+  "version": "1.4.9",
   "description": "React Native around the Agora RTM SDKs for Android and iOS agora",
   "main": "lib/commonjs/index",
   "module": "lib/module/index",

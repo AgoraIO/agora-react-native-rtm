@@ -1,3 +1,10 @@
+## [1.4.9](https://github.com/AgoraIO/agora-react-native-rtm/compare/v1.4.8...v1.4.9) (2022-02-08)
+
+
+### Bug Fixes
+
+* enableOfflineMessaging and enableHistoricalMessaging on iOS ([e75be33](https://github.com/AgoraIO/agora-react-native-rtm/commit/e75be33c3b17858ad41584319eb8e5124b34055c))
+
 ## [1.4.8](https://github.com/AgoraIO/agora-react-native-rtm/compare/v1.2.2-alpha.6...v1.4.8) (2021-08-25)
 
 
