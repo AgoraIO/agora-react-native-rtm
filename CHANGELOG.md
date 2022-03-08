@@ -1,3 +1,10 @@
+# [1.5.0](https://github.com/AgoraIO/agora-react-native-rtm/compare/v1.4.9...v1.5.0) (2022-03-08)
+
+
+### Features
+
+* support 1.4.10 ([54099c0](https://github.com/AgoraIO/agora-react-native-rtm/commit/54099c067ae6ca7c251c91d752c87e08e462c035))
+
 ## [1.4.9](https://github.com/AgoraIO/agora-react-native-rtm/compare/v1.4.8...v1.4.9) (2022-02-08)
 
 
