@@ -18,5 +18,5 @@ Pod::Spec.new do |s|
   s.static_framework = true
 
   s.dependency "React"
-  s.dependency 'AgoraRtm_iOS', "1.4.8"
+  s.dependency 'AgoraRtm_iOS', "1.4.10"
 end
