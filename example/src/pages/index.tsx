@@ -66,7 +66,7 @@ class Home extends React.Component<any, HomeState, AppContextType> {
             label="channel name"
             placeholder="alphabet"
             value={this.state.channel}
-            onChangeText={(text) => this.setState({ channel: text })}
+            onChangeText={(text: string) => this.setState({ channel: text })}
           />
           <Button
             style={styles.buttonContainerStyle}

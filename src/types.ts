@@ -169,10 +169,10 @@ export interface RTMMemberInfo {
 
 export enum LogLevel {
   OFF = 0,
-  INFO = 0x0f,
-  WARNING = 0x0e,
-  ERROR = 0x0c,
-  CRITICAL = 0x08,
+  INFO = 0b1111,
+  WARNING = 0b1110,
+  ERROR = 0b1100,
+  CRITICAL = 0b1000,
 }
 
 /**

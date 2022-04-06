@@ -736,7 +736,7 @@ export default class RtmEngine {
    * @deprecated {@link setLogFile} {@link setLogFilter} {@link setLogFileSize}
    * set sdk log file
    * @param path string: specified the generated log path
-   * @param level {@link LogLevel}: sdk log level (0: "OFF", 0x0f: "INFO", 0x0e: "WARN", 0x0c: "ERROR", 0x08: "CRITICAL")
+   * @param level {@link LogLevel}: sdk log level (0: "OFF", 0b1111: "INFO", 0b1110: "WARN", 0b1100: "ERROR", 0b1000: "CRITICAL")
    * @param size number: file size in kbytes
    * Note File size settings of less than 512 KB or greater than 10 MB will not take effect.
    * @return Promise<void> This method will return {path: boolean, level: boolean, size: boolean}
