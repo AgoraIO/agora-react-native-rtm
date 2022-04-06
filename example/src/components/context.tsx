@@ -36,9 +36,8 @@ function mutation(state: any, action: any) {
   }
 }
 
-export const AppContext: React.Context<AppContextType> = React.createContext<AppContextType>(
-  defaultProps
-);
+export const AppContext: React.Context<AppContextType> =
+  React.createContext<AppContextType>(defaultProps);
 export const AppContainer = ({ children }: any) => {
   const [state, dispatch] = useReducer(mutation, defaultProps);
 
