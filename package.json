@@ -22,7 +22,7 @@
   "scripts": {
     "test": "jest",
     "typescript": "tsc --noEmit",
-    "lint": "eslint \"**/*.{js,ts,tsx}\"",
+    "lint": "eslint \"**/*.{js,ts,tsx}\" --max-warnings=0",
     "prepare": "bob build",
     "release": "release-it",
     "example": "yarn --cwd example",
