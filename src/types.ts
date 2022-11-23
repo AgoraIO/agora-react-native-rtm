@@ -181,14 +181,6 @@ export enum LogLevel {
  */
 export type Listener = (...args: any[]) => any;
 
-/**
- * @internal
- * @ignore
- */
-export interface Subscription {
-  remove(): void;
-}
-
 export class RtmMessage {
   text: string;
   readonly messageType?: number;

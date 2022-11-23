@@ -1,4 +1,8 @@
-import { NativeEventEmitter, NativeModules } from 'react-native';
+import {
+  EmitterSubscription,
+  NativeEventEmitter,
+  NativeModules,
+} from 'react-native';
 
 import {
   AgoraPeerMessage,
@@ -32,7 +36,6 @@ import {
   RTMRemoteInvitationErrorMessage,
   RTMRemoteInvitationMessage,
   SendMessageOptions,
-  Subscription,
   UserAttribute,
   UserInfo,
   UserProfile,
@@ -260,7 +263,7 @@ export default class RtmEngine {
   /**
    * @ignore
    */
-  private _listeners = new Map<string, Map<Listener, Listener>>();
+  private _listeners = new Map<string, Map<Listener, EmitterSubscription>>();
 
   /**
    * @deprecated {@link addListener}
@@ -414,23 +417,19 @@ export default class RtmEngine {
   addListener<EventType extends keyof RtmClientEvents>(
     event: EventType,
     listener: RtmClientEvents[EventType]
-  ): Subscription {
+  ): EmitterSubscription {
     const callback = (res: any) => {
       // @ts-ignore
       listener(...res);
     };
     let map = this._listeners.get(event);
     if (map === undefined) {
-      map = new Map<Listener, Listener>();
+      map = new Map<Listener, EmitterSubscription>();
       this._listeners.set(event, map);
     }
-    RtmClientEvent.addListener(Prefix + event, callback);
-    map.set(listener, callback);
-    return {
-      remove: () => {
-        this.removeListener(event, listener);
-      },
-    };
+    const subscription = RtmClientEvent.addListener(Prefix + event, callback);
+    map.set(listener, subscription);
+    return subscription;
   }
 
   removeListener<EventType extends keyof RtmClientEvents>(
@@ -439,10 +438,7 @@ export default class RtmEngine {
   ) {
     const map = this._listeners.get(event);
     if (map === undefined) return;
-    RtmClientEvent.removeListener(
-      Prefix + event,
-      map.get(listener) as Listener
-    );
+    RtmClientEvent.removeSubscription(map.get(listener)!);
     map.delete(listener);
   }
 

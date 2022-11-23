@@ -79,8 +79,8 @@ public class Extensions {
   public static SendMessageOptions mapToSendMessageOptions(Map<?, ?> map) {
     return new SendMessageOptions() {{
       Map<?, ?> options = getMap(map, "options");
-      enableOfflineMessaging = getBoolean(options, "enableOfflineMessaging");
-      enableHistoricalMessaging = getBoolean(options, "enableHistoricalMessaging");
+//      enableOfflineMessaging = getBoolean(options, "enableOfflineMessaging");
+//      enableHistoricalMessaging = getBoolean(options, "enableHistoricalMessaging");
     }};
   }
 

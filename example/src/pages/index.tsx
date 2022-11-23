@@ -1,5 +1,4 @@
 import React from 'react';
-import { Header, withNavigation } from 'react-navigation';
 import {
   KeyboardAvoidingView,
   Platform,
@@ -7,38 +6,41 @@ import {
   StyleSheet,
 } from 'react-native';
 import { Button, TextInput } from 'react-native-paper';
+
 import PageContainer from '../components/page-container';
 import { AppContext, AppContextType } from '../components/context';
 
 interface HomeState {
+  uid: string;
   channel: string;
   login: boolean;
 }
 
 class Home extends React.Component<any, HomeState, AppContextType> {
   static contextType = AppContext;
-  context!: React.ContextType<typeof AppContext>;
+  declare context: React.ContextType<typeof AppContext>;
 
   constructor(props: any) {
     super(props);
     this.state = {
+      uid: 'test',
       channel: '',
       login: false,
     };
     this.onJoin = this.onJoin.bind(this);
   }
 
-  componentDidMount() {
-    this.context.client.login(`${+new Date()}`).then(() => {
+  componentWillUnmount() {
+    this.context.client.logout();
+    this.context.client.destroy();
+  }
+
+  onLogin() {
+    this.context.client.login(this.state.uid).then(() => {
       this.setState({
         login: true,
       });
     });
-  }
-
-  componentWillUnmount() {
-    this.context.client.logout();
-    this.context.client.destroy();
   }
 
   onJoin() {
@@ -52,7 +54,7 @@ class Home extends React.Component<any, HomeState, AppContextType> {
         style={styles.wrapper}
         keyboardVerticalOffset={Platform.select({
           ios: 0,
-          android: Header.HEIGHT + 64,
+          android: 64,
         })}
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
       >
@@ -63,8 +65,21 @@ class Home extends React.Component<any, HomeState, AppContextType> {
         >
           <TextInput
             style={styles.inputContainerStyle}
+            label="uid"
+            value={this.state.uid}
+            onChangeText={(text: string) => this.setState({ uid: text })}
+          />
+          <Button
+            style={styles.buttonContainerStyle}
+            onPress={() => {
+              this.onLogin();
+            }}
+          >
+            login
+          </Button>
+          <TextInput
+            style={styles.inputContainerStyle}
             label="channel name"
-            placeholder="alphabet"
             value={this.state.channel}
             onChangeText={(text: string) => this.setState({ channel: text })}
           />
@@ -106,4 +121,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default PageContainer(withNavigation(Home));
+export default PageContainer(Home);

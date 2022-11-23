@@ -7,10 +7,12 @@ module.exports = {
     [
       'module-resolver',
       {
+        extensions: ['.tsx', '.ts', '.js', '.json'],
         alias: {
           [pak.name]: path.join(__dirname, '..', pak.source),
         },
       },
     ],
+    ['@babel/plugin-transform-flow-strip-types', { allowDeclareFields: true }],
   ],
 };

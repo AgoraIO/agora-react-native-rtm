@@ -2,26 +2,20 @@
 
 ## Description
 
-The agora-react-native-rtm is an open-source wrapper for react-native developers. This SDK takes advantage of React Native and Agora RTM SDKs on Android/iOS.
-
-## Compatibility
-  * `>= react native 0.55.x`
-  * `iOS SDK 8.0+`
-  * `Android 5.0+ x86 arm64 armv7`
+The agora-react-native-rtm is an open-source wrapper for react-native developers.
+This SDK takes advantage of React Native and Agora RTM SDKs on Android/iOS.
 
 ## Installation
 
-Install with npm:
+```sh
+npm install agora-react-native-rtm
+```
 
- `npm install --save agora-react-native-rtm`
+## Usage
 
-Or, install with yarn:
-
- `yarn add agora-react-native-rtm`
-
-Either way, then link with:
-
- `react-native link agora-react-native-rtm`
+```js
+import { multiply } from 'agora-react-native-rtm';
+```
 
 ## Documentation
   * [examples](example)
@@ -34,3 +28,11 @@ Either way, then link with:
 * Complete [API documentation](https://docs.agora.io/en/) at the Developer Center
 * [File bugs about this sample](https://github.com/AgoraIO/agora-react-native-rtm/issues)
 * [React Native Getting Started](https://facebook.github.io/react-native/docs/getting-started.html)
+
+## Contributing
+
+See the [contributing guide](CONTRIBUTING.md) to learn how to contribute to the repository and the development workflow.
+
+## License
+
+MIT

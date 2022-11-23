@@ -1,8 +1,8 @@
 import React from 'react';
-import PageContainer from '../components/page-container';
-import { withNavigation } from 'react-navigation';
-import { AppContext, AppContextType } from '../components/context';
 import { GiftedChat } from 'react-native-gifted-chat';
+
+import PageContainer from '../components/page-container';
+import { AppContext, AppContextType } from '../components/context';
 import { Logger } from '../utils';
 
 type ChatRoomState = {
@@ -12,7 +12,7 @@ type ChatRoomState = {
 
 class ChatRoom extends React.Component<any, ChatRoomState, AppContextType> {
   static contextType = AppContext;
-  context!: React.ContextType<typeof AppContext>;
+  declare context: React.ContextType<typeof AppContext>;
 
   state: ChatRoomState = {
     messages: [],
@@ -73,15 +73,16 @@ class ChatRoom extends React.Component<any, ChatRoomState, AppContextType> {
   }
 
   componentDidMount() {
-    let channel = this.props.navigation.getParam('channel', 'agora');
-    console.log('mount chat ', channel);
+    const { channel } = this.props.route.params;
+    const channelId = channel === '' ? 'agora' : channel;
+    console.log('mount chat', channelId);
     this.subscribeChannelMessage();
     this.context.client
-      .join(channel)
+      .join(channelId)
       .then(() => {
         console.log('join channel success');
         this.setState({
-          channel,
+          channel: channelId,
         });
       })
       .catch((_: any) => {
@@ -90,22 +91,25 @@ class ChatRoom extends React.Component<any, ChatRoomState, AppContextType> {
   }
 
   componentWillUnmount() {
-    let channel = this.props.navigation.getParam('channel', 'agora');
-    this.context.client.leave(channel);
+    const { channel } = this.props.route.params;
+    const channelId = channel === '' ? 'agora' : channel;
+    this.context.client.leave(channelId);
   }
 
   render() {
-    let uid = this.props.navigation.getParam('uid', '0');
+    const { uid } = this.props.route.params;
+    let userId = uid === '' ? '0' : uid;
     return (
       <GiftedChat
+        wrapInSafeArea={false}
         messages={this.state.messages}
         onSend={(messages: any[]) => this.onSend(messages)}
         user={{
-          _id: uid,
+          _id: userId,
         }}
       />
     );
   }
 }
 
-export default PageContainer(withNavigation(ChatRoom));
+export default PageContainer(ChatRoom);

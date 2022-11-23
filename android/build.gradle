@@ -1,54 +1,55 @@
 buildscript {
-  // Buildscript is evaluated before everything else so we can't use getExtOrDefault
-  def kotlin_version = rootProject.ext.has('kotlinVersion') ? rootProject.ext.get('kotlinVersion') : project.properties['Agora_kotlinVersion']
-
   repositories {
-    mavenCentral()
-    google()
+      google()
+      mavenCentral()
   }
 
   dependencies {
-    classpath 'com.android.tools.build:gradle:3.2.1'
-    // noinspection DifferentKotlinGradleVersion
-    classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
+    classpath 'com.android.tools.build:gradle:3.5.3'
   }
 }
 
+def isNewArchitectureEnabled() {
+  return rootProject.hasProperty("newArchEnabled") &&  rootProject.getProperty("newArchEnabled") == "true"
+}
+
 apply plugin: 'com.android.library'
-apply plugin: 'kotlin-android'
+
+if (isNewArchitectureEnabled()) {
+  apply plugin: 'com.facebook.react'
+}
 
 def getExtOrDefault(name) {
-  return rootProject.ext.has(name) ? rootProject.ext.get(name) : project.properties['Agora_' + name]
+  return rootProject.ext.has(name) ? rootProject.ext.get(name) : project.properties['AgoraReactNativeRtm_' + name]
 }
 
 def getExtOrIntegerDefault(name) {
-  return rootProject.ext.has(name) ? rootProject.ext.get(name) : (project.properties['Agora_' + name]).toInteger()
+  return rootProject.ext.has(name) ? rootProject.ext.get(name) : (project.properties['AgoraReactNativeRtm_' + name]).toInteger()
 }
 
 android {
   compileSdkVersion getExtOrIntegerDefault('compileSdkVersion')
-  buildToolsVersion getExtOrDefault('buildToolsVersion')
+
   defaultConfig {
-    minSdkVersion 16
+    minSdkVersion getExtOrIntegerDefault('minSdkVersion')
     targetSdkVersion getExtOrIntegerDefault('targetSdkVersion')
-    versionCode 1
-    versionName "1.0"
-
-    consumerProguardFiles 'consumer-rules.pro'
+    buildConfigField "boolean", "IS_NEW_ARCHITECTURE_ENABLED", isNewArchitectureEnabled().toString()
   }
-
   buildTypes {
     release {
       minifyEnabled false
     }
   }
+
   lintOptions {
     disable 'GradleCompatible'
   }
+
   compileOptions {
     sourceCompatibility JavaVersion.VERSION_1_8
     targetCompatibility JavaVersion.VERSION_1_8
   }
+
 }
 
 repositories {
@@ -116,17 +117,23 @@ repositories {
   if (!found) {
     throw new GradleException(
       "${project.name}: unable to locate React Native android sources. " +
-        "Ensure you have you installed React Native as a dependency in your project and try again."
+      "Ensure you have you installed React Native as a dependency in your project and try again."
     )
   }
 }
 
-def kotlin_version = getExtOrDefault('kotlinVersion')
 
 dependencies {
-  // noinspection GradleDynamicVersion
-  api 'com.facebook.react:react-native:+'
-  api 'io.agora.rtm:rtm-sdk:1.4.10'
+    //noinspection GradleDynamicVersion
+  implementation "com.facebook.react:react-native:+"
+// From node_modules
+  api 'io.agora.rtm:rtm-sdk:1.5.3'
+}
 
-  implementation "org.jetbrains.kotlin:kotlin-stdlib:$kotlin_version"
+if (isNewArchitectureEnabled()) {
+  react {
+    jsRootDir = file("../src/")
+    libraryName = "AgoraReactNativeRtm"
+    codegenJavaPackageName = "com.agorareactnativertm"
+  }
 }
